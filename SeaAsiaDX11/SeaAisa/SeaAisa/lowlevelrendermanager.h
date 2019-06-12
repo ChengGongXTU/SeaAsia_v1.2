@@ -24,6 +24,7 @@ public:
 
 	bool LoadUnityFromObjFile(wstring objName, wstring mtlName, wstring textureName,DxScene &scene,
 		BasicManager &basicMng,ObjectType type);
+	bool LoadUnityFromFBXFile(wstring fbxName, DxScene &scene,BasicManager &basicMng, ObjectType type);
 	bool SetScene(DxDevice &dev,DxScene &scene);
 	bool DrawUnity(BasicManager &basicMng, Unity &unity);
 	bool DrawSceneUnity(BasicManager & basicMng, int SceneId, int cameraId, int dlightId);
@@ -33,4 +34,7 @@ public:
 	void ReverseUnityNormal(BasicManager &basicMng, Unity &unity);
 	void ReverseUnityNormalZaxis(BasicManager &basicMng, Unity &unity);
 	void RenderMaterialChange(BasicManager &basicMng, int materialID, MaterialParameter &para,int type);
+	void LoadFBXMesh(FbxNode *pNode);
+	void LoadFbxNode(FbxNode* pNode);
+	
 };

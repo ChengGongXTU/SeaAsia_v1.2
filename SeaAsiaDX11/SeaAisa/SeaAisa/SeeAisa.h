@@ -19,6 +19,8 @@
 
 //SDK
 //STL
+#include<fbxsdk.h>
+#pragma  comment(lib,"libfbxsdk.lib")
 #include<vector>
 //DX11
 #include<d3d11.h>
@@ -52,6 +54,7 @@
 #define Rel(x) {if(x){x->Release();x=0;}}
 using namespace std;
 using namespace DirectX;
+using namespace fbxsdk;
 
 static std::default_random_engine generator(time(NULL));
 static std::uniform_real_distribution<float> dis(0.0, 1.0);

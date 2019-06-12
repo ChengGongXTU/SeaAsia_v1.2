@@ -1,4 +1,5 @@
 #include "lowlevelrendermanager.h"
+using namespace fbxsdk;
 
 bool LowLevelRendermanager::StartUp()
 {
@@ -357,3 +358,140 @@ bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlNam
 	scene.endUnityId++;
 	
 }
+
+bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scene, BasicManager & basicMng, ObjectType type)
+{
+	//initialize 
+	FbxManager* pSdkManager = FbxManager::Create();
+	FbxIOSettings* ios = FbxIOSettings::Create(pSdkManager, IOSROOT);
+	pSdkManager->SetIOSettings(ios);
+	FbxString lPath = FbxGetApplicationDirectory();
+	pSdkManager->LoadPluginsDirectory(lPath.Buffer());
+	FbxScene* pScene = FbxScene::Create(pSdkManager, "My Scene");
+
+	//loadscene
+	int lFileMajor, lFileMinor, lFileRevision;
+	int lSDKMajor, lSDKMinor, lSDKRevision;
+	int lAnimStackCount;
+	bool lStatus;
+	char lPassword[1024];
+	FbxImporter* lImporter = NULL;
+	bool lImportStatus = false;
+
+	const wchar_t *wchar = fbxName.c_str();
+	char * m_char = NULL;
+	int len = WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), NULL, 0, NULL, NULL);
+	if (len == 0)
+	{	
+		return false;
+
+	}
+	else
+	{
+		m_char = new char[len + 1];
+		WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), m_char, len, NULL, NULL);
+	}
+
+	if (pSdkManager == NULL)
+	{
+		return false;
+	}
+	else
+	{
+		// Get the file version number generate by the FBX SDK.
+		FbxManager::GetFileFormatVersion(lSDKMajor, lSDKMinor, lSDKRevision);
+		lImporter = FbxImporter::Create(pSdkManager, "");
+		lImportStatus = lImporter->Initialize(m_char, -1, pSdkManager->GetIOSettings());
+		lImporter->GetFileVersion(lFileMajor, lFileMinor, lFileRevision);
+	}
+	pScene->Clear();
+	lStatus = lImporter->Import(pScene);
+	lImporter->Destroy();
+
+
+	FbxNode* pRootNode = pScene->GetRootNode();
+	//read fbx mesh
+	LoadFbxNode(pRootNode);
+	return true;
+
+}
+
+void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode)
+{
+	if (pNode->GetNodeAttribute())
+	{
+		FbxNodeAttribute::EType type = pNode->GetNodeAttribute()->GetAttributeType();
+
+		switch (type)
+		{
+		case fbxsdk::FbxNodeAttribute::eUnknown:
+			break;
+		case fbxsdk::FbxNodeAttribute::eNull:
+			break;
+		case fbxsdk::FbxNodeAttribute::eMarker:
+			break;
+		case fbxsdk::FbxNodeAttribute::eSkeleton:
+			break;
+		case fbxsdk::FbxNodeAttribute::eMesh:
+			LoadFBXMesh(pNode);
+			break;
+		case fbxsdk::FbxNodeAttribute::eNurbs:
+			break;
+		case fbxsdk::FbxNodeAttribute::ePatch:
+			break;
+		case fbxsdk::FbxNodeAttribute::eCamera:
+			break;
+		case fbxsdk::FbxNodeAttribute::eCameraStereo:
+			break;
+		case fbxsdk::FbxNodeAttribute::eCameraSwitcher:
+			break;
+		case fbxsdk::FbxNodeAttribute::eLight:
+			break;
+		case fbxsdk::FbxNodeAttribute::eOpticalReference:
+			break;
+		case fbxsdk::FbxNodeAttribute::eOpticalMarker:
+			break;
+		case fbxsdk::FbxNodeAttribute::eNurbsCurve:
+			break;
+		case fbxsdk::FbxNodeAttribute::eTrimNurbsSurface:
+			break;
+		case fbxsdk::FbxNodeAttribute::eBoundary:
+			break;
+		case fbxsdk::FbxNodeAttribute::eNurbsSurface:
+			break;
+		case fbxsdk::FbxNodeAttribute::eShape:
+			break;
+		case fbxsdk::FbxNodeAttribute::eLODGroup:
+			break;
+		case fbxsdk::FbxNodeAttribute::eSubDiv:
+			break;
+		case fbxsdk::FbxNodeAttribute::eCachedEffect:
+			break;
+		case fbxsdk::FbxNodeAttribute::eLine:
+			break;
+		default:
+			break;
+		}
+	}
+
+	for (int i = 0; i < pNode->GetChildCount(); i++)
+	{
+		LoadFbxNode(pNode->GetChild(i));
+	}
+}
+
+void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode)
+{	
+	//get mesh
+	FbxMesh *pMesh = NULL;
+	pMesh = pNode->GetMesh();
+	if (pMesh == NULL)
+	{
+		return;
+	}
+
+	int controlPointCount = pMesh->GetDeformerCount();
+	FbxVector4 *controlPoints = pMesh->GetControlPoints();
+}
+
+
