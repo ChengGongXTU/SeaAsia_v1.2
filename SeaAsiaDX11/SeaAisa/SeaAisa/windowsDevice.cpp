@@ -4,8 +4,8 @@ bool WindowsDevice::Init(HINSTANCE hInstance, int nShowCmd)
 {
 	ClassName = L"Visual Frame";
 
-	w = 1280;
-	h = 720;
+	w = GetSystemMetrics(SM_CXSCREEN);
+	h = GetSystemMetrics(SM_CYSCREEN);
 
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = CS_HREDRAW | CS_VREDRAW;

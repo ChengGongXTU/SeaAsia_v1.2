@@ -1,1 +1,30 @@
-﻿  SeaAisa.vcxproj -> D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\x64\Debug\SeaAisa.exe
+﻿  mainwindowui.cpp
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\seeaisa.h(56): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\camera.h(81): warning C4244: “=”: 从“const int”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\camera.h(82): warning C4244: “=”: 从“const int”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\shape.h(113): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(124): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(125): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(79): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(85): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(97): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(178): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(468): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(469): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(629): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(630): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(655): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(659): warning C4305: “=”: 从“double”到“float”截断
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(662): warning C4305: “=”: 从“double”到“float”截断
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(665): warning C4305: “=”: 从“double”到“float”截断
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(719): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(723): warning C4305: “=”: 从“double”到“float”截断
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(726): warning C4305: “=”: 从“double”到“float”截断
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(729): warning C4305: “=”: 从“double”到“float”截断
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(837): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(838): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(1000): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(1001): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(1102): warning C4244: “=”: 从“long”转换到“float”，可能丢失数据
+d:\worksoftware\github\seaasia_v1.2\seaasiadx11\seaaisa\seaaisa\mainwindowui.cpp(1116): warning C4244: “=”: 从“float”转换到“long”，可能丢失数据
+  SeaAisa.vcxproj -> D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\x64\Debug\SeaAisa.exe

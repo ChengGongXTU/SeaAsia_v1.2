@@ -30,5 +30,7 @@ public:
 	void moveView(float x,float y,float z);
 	void SetProjectionViewAngle(float newAspect);
 	void SetProjectionNear(float nearV);
+	void SetProjectionRatio(float ratio);
+	void ResizeCamera();
 
 };

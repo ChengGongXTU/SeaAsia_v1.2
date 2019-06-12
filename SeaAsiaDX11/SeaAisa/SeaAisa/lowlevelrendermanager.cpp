@@ -214,6 +214,22 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		dxdev.vp.MinDepth = 0.f;
 		dxdev.vp.MaxDepth = 1.0f;
 		dxdev.context->RSSetViewports(1, &dxdev.vp);
+
+		//reseize camera
+		if (basicMng.sceneManager.scenenNum > 0)
+		{
+		DxScene scene = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId];
+		if (scene.cameraNum > 0)
+		{
+			DxCamera cam = scene.cameraList[scene.currentCameraId];
+			cam.cWidth = w;
+			cam.cHeight = h;
+			cam.ResizeCamera();
+		}
+
+		}
+
+
 	}
 }
 

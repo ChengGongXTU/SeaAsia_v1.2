@@ -2,7 +2,7 @@
 
 static bool show_scene_setting_view = false;
 static bool show_scene_resource_view = true;
-static bool show_scene_list_view = true;
+static bool show_resource_list_view = true;
 static bool show_unity_load_view = false;
 static bool show_camera_setting_view = false;
 static bool show_point_light_setting_view = false;
@@ -15,7 +15,7 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 {
 
 	if (show_scene_resource_view)	ScenenResourceView(winDev, basicMng, renderMng, &show_scene_resource_view);
-	if (show_scene_list_view)	ScenenListView(winDev, basicMng, &show_scene_list_view);
+	//if (show_resource_list_view)	ResourceListView(winDev, basicMng, &show_resource_list_view);
 	if (show_render_setting_view) RenderSettingView(winDev, basicMng, renderMng, &show_render_setting_view);
 
 
@@ -80,9 +80,9 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Key Frame View"))
+			if (ImGui::BeginMenu("Resource View"))
 			{
-				if (ImGui::MenuItem("Show the View", NULL, &show_scene_list_view));
+				if (ImGui::MenuItem("Show the View", NULL, &show_resource_list_view));
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
@@ -459,7 +459,7 @@ static void ScenenResourceView(WindowsDevice & winDev, BasicManager &basicMng, L
 	ImGui::End();
 }
 
-static void ScenenListView(WindowsDevice & winDev, BasicManager &basicMng, bool *p_open)
+static void ResourceListView(WindowsDevice & winDev, BasicManager &basicMng, bool *p_open)
 {
 	RECT rect;
 	GetClientRect(winDev.hwnd, &rect);
@@ -474,22 +474,7 @@ static void ScenenListView(WindowsDevice & winDev, BasicManager &basicMng, bool 
 		ImGui::End();
 		return;
 	}
-
-	float tex_w = (float)ImGui::GetIO().Fonts->TexWidth;
-	float tex_h = (float)ImGui::GetIO().Fonts->TexHeight;
-	ImTextureID tex_id = ImGui::GetIO().Fonts->TexID;
-
-	for (int i = 0; i < basicMng.sceneManager.endSceneId; i++)
-	{
-		ImGui::PushID(i);
-		if (ImGui::ImageButton(tex_id, ImVec2(80, 80), ImVec2(0, 0), ImVec2(1, 1), 3, ImColor(0, 0, 0, 255)))
-		{
-			basicMng.sceneManager.currentSceneId = i;
-		}
-		ImGui::PopID();
-		ImGui::SameLine();
-	}
-	ImGui::End();
+	
 }
 
 static void SceneSettingView(BasicManager &basicMng, bool *p_open)
@@ -549,9 +534,9 @@ static void UnityLoadingView(BasicManager &basicMng, LowLevelRendermanager &rend
 		static wstring textureName;
 		static string error = "no error!";
 
-		static char str1[128] = "1.obj";
-		static char str2[128] = "1.mtl";
-		static char str3[128] = "1.bmp";
+		static char str1[128] = "ball.obj";
+		static char str2[128] = "ball.mtl";
+		static char str3[128] = "ball.bmp";
 
 
 		ImGui::InputText("Input OBJ File Name", str1, 128);
@@ -640,9 +625,9 @@ static void CameraSettingView(BasicManager &basicMng, bool *p_open)
 	static float up[3] = { 0,1.f,0 };
 	static float cnear = 0.1f;
 	static float cfar = 10000.f;
-	static float aspect = M_PI / 4;
-	static float cwidth = 1280.f;
-	static float cheight = 720.f;
+	static float aspect = 60;
+	static float cwidth = GetSystemMetrics(SM_CXSCREEN);
+	static float cheight = GetSystemMetrics(SM_CYSCREEN);
 
 	ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiSetCond_FirstUseEver);
 	if (!ImGui::Begin("Camera Setting", p_open))
@@ -1012,7 +997,9 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 
 	//vewiport 
 	static float vppos[2] = { 0.f,0.f };
-	static float vpwh[2] = { 1280.f,720.f };
+	float w1 = GetSystemMetrics(SM_CXSCREEN);
+	float h2 = GetSystemMetrics(SM_CYSCREEN);
+	static float vpwh[2] = { w1,h2 };
 	static float vpdepth[2] = { 0.f,1.f };
 
 	if (ImGui::CollapsingHeader("set viewport"))

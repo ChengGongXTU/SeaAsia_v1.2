@@ -9,7 +9,7 @@ void DxCamera::Init(WindowsDevice & Dev)
 	at = Point(0.0f, 120.0f, 201.0f);
 	up = Vector(0.0f, 1.0f, 0.0f);
 
-	aspect = M_PI / 4.0;
+	aspect = 60;
 	cNear = 1.f;
 	cFar = 10000.f;
 
@@ -47,9 +47,20 @@ void DxCamera::moveView(float x, float y, float z) {
 }
 
 void DxCamera::SetProjectionViewAngle(float newAspect) {
-	mProjection = MatrixPerspectiveFov(newAspect, 8 / (float)6, cNear, cFar).m;
+	mProjection = MatrixPerspectiveFov(newAspect, cWidth / cHeight, cNear, cFar).m;
 }
 
 void DxCamera::SetProjectionNear(float nearV) {
-	mProjection = MatrixPerspectiveFov(aspect, 8 / (float)6, nearV, cFar).m;
+	mProjection = MatrixPerspectiveFov(aspect, cWidth / cHeight, nearV, cFar).m;
+}
+void DxCamera::SetProjectionRatio(float ratio)
+{
+	mProjection = MatrixPerspectiveFov(aspect, ratio, cNear, cFar).m;
+}
+
+void DxCamera::ResizeCamera()
+{
+	mView = LookAt(eye, at, up).m;
+	mView2 = MatrixIdentity().m;
+	mProjection = XMMatrixPerspectiveFovLH(aspect, cWidth / cHeight, cNear, cFar);
 }
