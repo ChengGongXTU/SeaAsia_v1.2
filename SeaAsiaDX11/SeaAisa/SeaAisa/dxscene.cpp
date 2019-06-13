@@ -29,6 +29,11 @@ void DxScene::setUp(int uniNum, int camNum, int plNum, int dlNum) {
 		unityList[i].MaterialsIdIndex = NULL;
 		unityList[i].Pos = Point(0.f, 0.f, 0.f);
 		unityList[i].transform = MatrixIdentity().m;
+		unityList[i].UnityId = -1;
+		unityList[i].parent = NULL;
+		unityList[i].childs = NULL;
+		unityList[i].childCount = 0;
+		unityList[i].name = NULL;
 	}
 	cameraList = new DxCamera[camNum];
 	for (int i = 0; i < maxCameraNum; i++)

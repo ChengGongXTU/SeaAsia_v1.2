@@ -13,11 +13,10 @@ HRESULT DxDevice::CreateDeviceAndSwap() {
 	D3D_FEATURE_LEVEL featureLevels[] =
 	{
 		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
 		D3D_FEATURE_LEVEL_10_0,
 	};
 	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
-	hr = D3D11CreateDeviceAndSwapChain(0, D3D_DRIVER_TYPE_HARDWARE, 0, creatDeviceFlag, featureLevels, numFeatureLevels, D3D11_SDK_VERSION, &sd,
+	hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creatDeviceFlag, featureLevels, numFeatureLevels, D3D11_SDK_VERSION, &sd,
 		&swapChain, &device, &featureLevel, &context);
 	return hr;
 }
@@ -25,7 +24,7 @@ HRESULT DxDevice::CreateDeviceAndSwap() {
 bool DxDevice::Init(WindowsDevice &Dev)
 {
 	// create device and context
-	creatDeviceFlag = D3D11_CREATE_DEVICE_DEBUG;
+	creatDeviceFlag = 0;//D3D11_CREATE_DEVICE_DEBUG;
 	featureLevel = D3D_FEATURE_LEVEL_11_0;
 
 	ZeroMemory(&sd, sizeof(sd));
@@ -38,6 +37,7 @@ bool DxDevice::Init(WindowsDevice &Dev)
 																 //mainDev.sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;              //how an image is stretched to fit a given monitor's resolution
 	sd.SampleDesc.Count = 1;											// not use 4x MSAA
 	sd.SampleDesc.Quality = 0;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;							//Use the surface or resource as a back buffer
 	sd.BufferCount = 2;													// use one backbuffer for double buffering
 	sd.OutputWindow = Dev.hwnd;									//NOTICE!!! get a window's handle for this swapchain

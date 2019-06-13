@@ -353,7 +353,23 @@ bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlNam
 
 	//set type
 	scene.unityList[scene.endUnityId].type = type;
-	
+
+	//name and id
+	const wchar_t *wchar = objName.c_str();
+	char * m_char = NULL;
+	int len = WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), NULL, 0, NULL, NULL);
+	if (len == 0)
+	{
+		m_char = "Unity";
+	}
+	else
+	{
+		m_char = new char[len + 1];
+		WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), m_char, len, NULL, NULL);
+	}
+	scene.unityList[scene.endUnityId].name = m_char;
+	scene.unityList[scene.endUnityId].UnityId = scene.endUnityId;
+
 	scene.currentUnityId = scene.endUnityId;
 	scene.endUnityId++;
 	

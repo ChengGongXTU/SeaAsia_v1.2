@@ -24,6 +24,6 @@ static void PointLightSettingView(BasicManager &basicMng, bool *p_open);
 static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, bool *p_open);
 static void CameraCangeView(BasicManager &basicMng, bool *p_open);
 static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& renderMng,bool *p_open);
-
+static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng);
 
 void MainWindowUI(WindowsDevice & winDev,BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& RayMng,bool *p_open);

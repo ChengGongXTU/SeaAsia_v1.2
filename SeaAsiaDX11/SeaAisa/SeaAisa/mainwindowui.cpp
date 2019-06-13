@@ -10,6 +10,7 @@ static bool show_direction_light_setting_view = false;
 static bool show_render_setting_view = true;
 static bool show_camera_change_view = false;
 static bool show_materila_change_view = false;
+static bool Show_Example_App_Property_Editor = true;
 
 void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& rayMng, bool *p_open)
 {
@@ -17,6 +18,7 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 	if (show_scene_resource_view)	ScenenResourceView(winDev, basicMng, renderMng, &show_scene_resource_view);
 	//if (show_resource_list_view)	ResourceListView(winDev, basicMng, &show_resource_list_view);
 	if (show_render_setting_view) RenderSettingView(winDev, basicMng, renderMng, &show_render_setting_view);
+	if (Show_Example_App_Property_Editor) ShowExampleAppPropertyEditor(&Show_Example_App_Property_Editor, basicMng);
 
 
 
@@ -1124,5 +1126,67 @@ static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& re
 
 	ImGui::EndGroup();
 
+	ImGui::End();
+}
+
+static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng)
+{
+	ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiSetCond_FirstUseEver);
+	if (!ImGui::Begin("Example: Property editor", p_open))
+	{
+		ImGui::End();
+		return;
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+	ImGui::Columns(2);
+	ImGui::Separator();
+
+	struct funcs
+	{
+		static void ShowDummyObject(Unity &unity, int uid)
+		{
+			ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+			ImGui::AlignFirstTextHeightToWidgets();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
+			bool node_open = ImGui::TreeNode("Unity", "%s_%u", unity.name, uid);
+			ImGui::NextColumn();
+			ImGui::AlignFirstTextHeightToWidgets();
+			if(ImGui::Button("Change", ImVec2(100, 15)));
+			{
+
+			}
+			ImGui::NextColumn();
+			if (node_open )
+			{   
+				if(unity.childCount >0)
+				{
+					for (int i = 0; i < unity.childCount; i++)
+					{
+						ImGui::PushID(i); // Use field index as identifier.
+						ShowDummyObject(unity.childs[i], 424242);
+						ImGui::PopID();
+					}					
+				}
+
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+	};
+
+	// Iterate dummy objects with dummy members (all the same data)
+	DxScene scene = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId];
+	int unityCount = scene.endUnityId - 0;
+	if (unityCount > 0)
+	{
+		for (int obj_i = 0; obj_i < unityCount; obj_i++)
+			if(scene.unityList[obj_i].parent == NULL && scene.unityList[obj_i].UnityId >=0)
+				funcs::ShowDummyObject(scene.unityList[obj_i], obj_i);
+	}
+
+
+	ImGui::Columns(1);
+	ImGui::Separator();
+	ImGui::PopStyleVar();
 	ImGui::End();
 }

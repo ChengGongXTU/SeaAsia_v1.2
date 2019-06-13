@@ -26,6 +26,14 @@ public:
 	int materialNum;
 	int* MaterialsIdIndex;
 
+	int UnityId;
+	
+	Unity* parent; //only one
+	Unity* childs; // much
+	int childCount;
+
+	char* name;
+
 	Unity() {
 		Pos = Point(0.f, 0.f, 0.f);
 		transform = XMMatrixIdentity();
@@ -35,6 +43,14 @@ public:
 		samplerStateId = 0;
 
 		materialNum = 0;
+
+		UnityId = -1;
+
+		parent = NULL;
+		childs = NULL;
+		childCount = 0;
+
+		name = NULL;
 	}
 	
 };
