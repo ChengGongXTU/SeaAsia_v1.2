@@ -672,7 +672,7 @@ static void CameraSettingView(BasicManager &basicMng, bool *p_open)
 	{
 		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].currentCameraId = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endCameraId;
 		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].cameraList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endCameraId].Init(
-			position[0], position[1], position[2], lookat[0], lookat[1], lookat[2], up[0], up[1], up[2], cnear, cfar, aspect, cwidth, cheight);
+			position[0], position[1], position[2], lookat[0], lookat[1], lookat[2], up[0], up[1], up[2], cnear, cfar, aspect*3.1415f / 360.f, cwidth, cheight);
 		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endCameraId++;
 		show_camera_setting_view = false;
 	}
@@ -742,7 +742,7 @@ static void CameraCangeView(BasicManager &basicMng, bool *p_open)
 		camera.cWidth = cwidth;
 		camera.cHeight = cheight;
 		camera.mView = LookAt(camera.eye, camera.at, camera.up).m;
-		camera.mProjection = MatrixPerspectiveFov(aspect, camera.cWidth / camera.cHeight, camera.cNear, camera.cFar).m;
+		camera.mProjection = MatrixPerspectiveFov(aspect*3.1415f/360.f, camera.cWidth / camera.cHeight, camera.cNear, camera.cFar).m;
 		show_camera_change_view = false;
 	}
 	ImGui::End();
@@ -948,6 +948,7 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 				cameraId = 0;
 			}
 			ImGui::InputInt("Camera ID", &cameraId);
+			/*
 			if (ImGui::Button("Create Camera"))
 			{
 				RenderCameraId = cameraId;
@@ -955,11 +956,12 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 				renderMng.cameraManager.CreateViewBuffer(basicMng.dxDevice);
 				renderMng.cameraManager.CreateProjectionBuffer(basicMng.dxDevice);
 			}
-
+			*/
 			ImGui::Text("Current Camera %d", basicMng.sceneManager.sceneList[RenderSceneId].currentCameraId);
 			if (ImGui::Button("Create Current Camera"))
 			{
 				RenderCameraId = basicMng.sceneManager.sceneList[RenderSceneId].currentCameraId;
+				renderMng.cameraManager.CreateWorldBuffer(basicMng.dxDevice);
 				renderMng.cameraManager.CreateViewBuffer(basicMng.dxDevice);
 				renderMng.cameraManager.CreateProjectionBuffer(basicMng.dxDevice);
 			}

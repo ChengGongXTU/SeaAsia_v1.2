@@ -46,6 +46,7 @@ void DxScene::setUp(int uniNum, int camNum, int plNum, int dlNum) {
 		cameraList[i].cFar = 0.f;
 		cameraList[i].cWidth = 1.f;
 		cameraList[i].cHeight = 1.f;
+		cameraList[i].mWorld = MatrixIdentity().m;
 		cameraList[i].mView = MatrixIdentity().m;
 		cameraList[i].mProjection = MatrixIdentity().m;
 

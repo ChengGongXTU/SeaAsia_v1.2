@@ -17,6 +17,7 @@ public:
 	float cWidth;
 	float cHeight;
 
+	Matrix4x4 mWorld;
 	Matrix4x4 mProjection;
 	Matrix4x4 mView;
 	Matrix4x4 mView2;

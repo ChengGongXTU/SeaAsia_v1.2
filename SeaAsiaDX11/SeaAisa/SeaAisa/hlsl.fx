@@ -10,34 +10,28 @@
 Texture2D txDiffuse : register( t0 );
 SamplerState samLinear : register( s0 );
 
-cbuffer viewTransform : register( b0 )
+cbuffer wolrdTransform : register( b0 )
 {
-    matrix View;
-    matrix View2;
+	matrix mWorld;
 };
 
-cbuffer projectionTransform : register( b1 )
+cbuffer viewTransform : register( b1 )
 {
-    matrix Projection;
+	matrix mView;
+    matrix mView2;
 };
 
-cbuffer viewTransform : register(b5)
+
+cbuffer projectionTransform : register( b2 )
 {
-    matrix PSView;
-    matrix PSView2;
-    
+	matrix mProjection;
 };
 
-cbuffer DirLight : register( b2 )
+cbuffer DirLight : register( b3 )
 {
     float4 Dir;
     float4 DirLightColor;
 };
-
-//cbuffer moveObj : register(b3)
-//{
-//    matrix World;
-//};
 
 
 cbuffer MaterialParameter:register(b4)
@@ -53,46 +47,47 @@ cbuffer MaterialParameter:register(b4)
 };
 
 
-
 //--------------------------------------------------------------------------------------
 struct VS_INPUT
 {
-    float3 Pos : POSITION;
-    float3 Normal : NORMAL;
-    float2 Tex : TEXCOORD0;
+    float3 vertex : POSITION;
+    float3 normal : NORMAL;
+    float2 tex : TEXCOORD0;
 };
 
 struct PS_INPUT
 {
-    float4 Pos : SV_POSITION;
-    float4 Normal : NORMAL;
-    float2 Tex : TEXCOORD0;
+    float4 pos : SV_POSITION;
+    float4 normal : NORMAL;
+    float2 tex : TEXCOORD0;
     matrix view : MATRIX;
     
 };
 
-static matrix viewTran = View;
+//static matrix viewTran = mView;
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
-PS_INPUT VS( VS_INPUT input )
+PS_INPUT VS( VS_INPUT v )
 {
-    viewTran = View;
-    PS_INPUT output = (PS_INPUT)0;
-    output.Pos = mul(float4(input.Pos,1.f), View);
-    output.Pos = mul(output.Pos, Projection);
-    output.Normal =normalize(mul(float4(input.Normal,0.f),View));
-    output.Tex = input.Tex;
-    output.view = View;
-    return output;
+    //viewTran = mView;
+    PS_INPUT o = (PS_INPUT)0;
+	
+	o.pos = mul(float4(v.vertex, 1.f),mWorld);
+	o.pos = mul(o.pos, mView);
+	o.pos = mul(o.pos, mProjection);
+    //o.Normal = normalize(mul(float4(o.Normal,0.f),mView));
+    //o.Tex = v.Tex;
+    //o.view = mView;
+    return o;
 }
 
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-float4 PS( PS_INPUT input) : SV_Target
-{
+float4 PS( PS_INPUT i) : SV_Target
+{	/*
     float4 lightdir = -normalize(mul(Dir, input.view));
 
     float cosA = dot(lightdir, input.Normal);
@@ -120,4 +115,6 @@ float4 PS( PS_INPUT input) : SV_Target
         
 
     }
+	*/
+	return float4(1.f,1.f,1.f,1.f);
 }

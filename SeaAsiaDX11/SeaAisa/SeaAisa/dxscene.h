@@ -27,9 +27,10 @@ public:
 	int* MaterialsIdIndex;
 
 	int UnityId;
+	bool empty;
 	
 	Unity* parent; //only one
-	Unity* childs; // much
+	Unity** childs; // much
 	int childCount;
 
 	char* name;
@@ -45,7 +46,7 @@ public:
 		materialNum = 0;
 
 		UnityId = -1;
-
+		empty = true;
 		parent = NULL;
 		childs = NULL;
 		childCount = 0;

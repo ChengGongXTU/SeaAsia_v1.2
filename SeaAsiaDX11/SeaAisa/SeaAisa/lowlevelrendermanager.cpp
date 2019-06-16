@@ -369,6 +369,7 @@ bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlNam
 	}
 	scene.unityList[scene.endUnityId].name = m_char;
 	scene.unityList[scene.endUnityId].UnityId = scene.endUnityId;
+	scene.unityList[scene.endUnityId].empty = false;
 
 	scene.currentUnityId = scene.endUnityId;
 	scene.endUnityId++;
@@ -427,13 +428,57 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scen
 
 	FbxNode* pRootNode = pScene->GetRootNode();
 	//read fbx mesh
-	LoadFbxNode(pRootNode);
+	LoadFbxNode(pRootNode, NULL, -1, scene, basicMng);
 	return true;
 
 }
 
-void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode)
-{
+void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int childInex, DxScene & scene, BasicManager & basicMng)
+{	
+
+	Unity* currentUnity = NULL;
+	int currentUnityID = NULL;
+	bool NoEmptyUnity = true;
+
+	//find empty unity, and fill into it
+	if (scene.endUnityId > 0)
+	{
+		for (int i = 0; i < (scene.endUnityId - 0); i++)
+		{
+			 
+			if (scene.unityList[i].empty == true)
+			{
+				currentUnity = &scene.unityList[i];
+				currentUnity->UnityId = i;
+				currentUnity->empty = false;
+				NoEmptyUnity = false;
+				currentUnityID = i;
+				break;
+			}
+		}
+	}
+
+	//create new unity
+	if (NoEmptyUnity)
+	{
+		currentUnity = &scene.unityList[scene.endUnityId];
+		currentUnity->UnityId = scene.endUnityId;
+		currentUnityID = scene.endUnityId;
+		currentUnity->empty = false;
+		scene.endUnityId++;
+	}
+	
+	//find parent unity
+	if (pParentUnity != NULL && childInex >= 0)
+	{
+		currentUnity->parent = pParentUnity;
+		pParentUnity->childs[childInex] = &scene.unityList[currentUnityID];
+		
+	}
+
+	//get nodeinfo
+	const char* name = pNode->GetName();
+
 	if (pNode->GetNodeAttribute())
 	{
 		FbxNodeAttribute::EType type = pNode->GetNodeAttribute()->GetAttributeType();
@@ -449,7 +494,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode)
 		case fbxsdk::FbxNodeAttribute::eSkeleton:
 			break;
 		case fbxsdk::FbxNodeAttribute::eMesh:
-			LoadFBXMesh(pNode);
+			LoadFBXMesh(pNode, scene, basicMng);
 			break;
 		case fbxsdk::FbxNodeAttribute::eNurbs:
 			break;
@@ -490,13 +535,21 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode)
 		}
 	}
 
-	for (int i = 0; i < pNode->GetChildCount(); i++)
-	{
-		LoadFbxNode(pNode->GetChild(i));
+	// get child unity
+	if (pNode->GetChildCount() > 0)
+	{	
+		currentUnity->childCount = pNode->GetChildCount();
+		currentUnity->childs = new Unity*[currentUnity->childCount];
+		for (int i = 0; i < pNode->GetChildCount(); i++)
+		{	
+			
+			LoadFbxNode(pNode->GetChild(i), &scene.unityList[currentUnityID], i, scene, basicMng);
+		}
 	}
+
 }
 
-void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode)
+void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicManager &basicMng)
 {	
 	//get mesh
 	FbxMesh *pMesh = NULL;

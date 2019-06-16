@@ -49,6 +49,6 @@ bool LightManager::SetDirLight(DxDevice &dev, DxDirLight &dirLight)
 {	
 
 	dev.context->UpdateSubresource(DirLightBuffer, 0, NULL,&dirLight, 0, 0);
-	dev.context->PSSetConstantBuffers(2, 1, &DirLightBuffer);
+	dev.context->PSSetConstantBuffers(3, 1, &DirLightBuffer);
 	return true;
 }

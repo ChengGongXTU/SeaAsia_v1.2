@@ -5,6 +5,7 @@ void CameraManager::StartUp()
 	ZeroMemory(&bd, sizeof(bd));
 	viewTransformBuffer = NULL;
 	projTransformBuffer = NULL;
+	worldjTransformBuffer = NULL;
 	viewTransform.mView = XMMatrixIdentity();
 	projectionTransform.mProjection = XMMatrixIdentity();
 }
@@ -15,6 +16,7 @@ void CameraManager::ShutUp()
 	ZeroMemory(&bd, sizeof(bd));
 	viewTransformBuffer = NULL;
 	projTransformBuffer = NULL;
+	worldjTransformBuffer = NULL;
 	viewTransform.mView = XMMatrixIdentity();
 	projectionTransform.mProjection = XMMatrixIdentity();
 }
@@ -50,8 +52,26 @@ bool CameraManager::CreateProjectionBuffer(DxDevice & dev)
 	return true;
 }
 
-bool CameraManager::LoadCamera(DxDevice &dev, DxCamera & camera)
+bool CameraManager::CreateWorldBuffer(DxDevice & dev)
 {
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WorldTransform);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &worldjTransformBuffer);
+
+	if (FAILED(hr))	return false;
+
+	return true;
+}
+
+bool CameraManager::LoadCamera(DxDevice &dev, DxCamera & camera)
+{	
+	worldTransform.mWorld = XMLoadFloat4x4(&camera.mWorld.m);
+	worldTransform.mWorld = XMMatrixTranspose(worldTransform.mWorld);
+	dev.context->UpdateSubresource(worldjTransformBuffer, 0, NULL, &worldTransform, 0, 0);
 
 	viewTransform.mView = XMLoadFloat4x4(&camera.mView.m);
 	viewTransform.mView = XMMatrixTranspose(viewTransform.mView);
@@ -72,9 +92,9 @@ bool CameraManager::LoadCamera(DxDevice &dev, DxCamera & camera)
 
 bool CameraManager::InputCamera(DxDevice & dev)
 {
-	dev.context->VSSetConstantBuffers(0, 1, &viewTransformBuffer);
-	dev.context->PSSetConstantBuffers(5, 1, &viewTransformBuffer);
-	dev.context->VSSetConstantBuffers(1, 1, &projTransformBuffer);
+	dev.context->VSSetConstantBuffers(0, 1, &worldjTransformBuffer);
+	dev.context->VSSetConstantBuffers(1, 1, &viewTransformBuffer);
+	dev.context->VSSetConstantBuffers(2, 1, &projTransformBuffer);
 
 	return true;
 }
