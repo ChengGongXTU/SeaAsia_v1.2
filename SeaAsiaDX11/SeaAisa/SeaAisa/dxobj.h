@@ -34,6 +34,8 @@ public:
 	int* beginFaceInEachMtl;
 	int* FaceNumInEachMtl;
 
+	bool empty;
+
 	//// D3D texture resource view
 	//ID3D11ShaderResourceView* texView;
 

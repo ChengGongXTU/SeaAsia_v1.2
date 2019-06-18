@@ -476,7 +476,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 
 	}
 
-	//get nameinfo
+	//get name info
 	const char* name = pNode->GetName();
 	int charLen = strlen(name);
 	if (charLen > 0)
@@ -630,13 +630,185 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 		return;
 	}
 
-	int controlPointCount = pMesh->GetDeformerCount();
-	FbxVector4 *controlPoints = pMesh->GetControlPoints();
+	int polygonCount = pMesh->GetPolygonCount();
+	if (polygonCount > 0)
+	{
+		FbxVector4* pControlPoint = pMesh->GetControlPoints();
+		vector<FbxVector4> vertices;
+		vector<FbxVector4> normals;
+		vector<FbxVector2> uvs;
+		vector<int> index;
 
-	FbxGeometryElementNormal * normal = pMesh->GetElementNormal(0);
-	FbxGeometryElementUV* uv = pMesh->GetElementUV(0);
+		for (int i = 0; i < polygonCount; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				//load vertex position
+				int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+				vertices.push_back(pControlPoint[controlPoinIndex]);
+				index.push_back(i * 3 + j);
 
-	
+				//load vertex normal
+				FbxGeometryElementNormal* pFbxNormals = pMesh->GetElementNormal(0);
+				switch (pFbxNormals->GetMappingMode())
+				{
+					case FbxGeometryElement::eByControlPoint:
+					{
+						switch (pFbxNormals->GetReferenceMode())
+						{
+							case FbxGeometryElement::eDirect:
+							{
+								normals.push_back(pFbxNormals->GetDirectArray().GetAt(controlPoinIndex));
+							}
+							break;
+
+							case FbxGeometryElement::eIndexToDirect:
+							{
+								normals.push_back(pFbxNormals->GetDirectArray().GetAt(pFbxNormals->GetIndexArray().GetAt(controlPoinIndex)));
+							}
+							break;
+
+							default:
+								break;
+						}
+					}
+					break;
+
+					case FbxGeometryElement::eByPolygonVertex:
+					{
+						switch (pFbxNormals->GetReferenceMode())
+						{
+							case FbxGeometryElement::eDirect:
+							{
+								normals.push_back(pFbxNormals->GetDirectArray().GetAt(i*3 + j));
+							}
+							break;
+
+							case FbxGeometryElement::eIndexToDirect:
+							{
+								normals.push_back(pFbxNormals->GetDirectArray().GetAt(pFbxNormals->GetIndexArray().GetAt(i*3 + j)));
+							}
+							break;
+
+							default:
+								break;
+						}
+					}
+					break;
+
+				}
+
+				//load uv0
+				FbxGeometryElementUV* pFbxUVs = pMesh->GetElementUV(0);
+				switch (pFbxUVs->GetMappingMode())
+				{
+					case FbxGeometryElement::eByControlPoint:
+					{
+						switch (pFbxUVs->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						{
+							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(controlPoinIndex));
+						}
+						break;
+
+						case FbxGeometryElement::eIndexToDirect:
+						{
+							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(pFbxUVs->GetIndexArray().GetAt(controlPoinIndex)));
+						}
+						break;
+
+						default:
+							break;
+						}
+					}
+					break;
+
+					case FbxGeometryElement::eByPolygonVertex:
+					{
+						switch (pFbxUVs->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						{
+							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(i * 3 + j));
+						}
+						break;
+
+						case FbxGeometryElement::eIndexToDirect:
+						{
+							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(pFbxUVs->GetIndexArray().GetAt(i * 3 + j)));
+						}
+						break;
+
+						default:
+							break;
+						}
+					}
+					break;
+
+				}
+
+
+			}
+		}
+		
+		//create DxObj
+		ObjManager& objMng = basicMng.objManager;
+		int currentObjId = NULL;
+		DxObj* currentObj;
+		bool NoEmptyUnity = true;
+
+		if (objMng.endObjId > 0)
+		{
+			for (int i = 0; i < (objMng.endObjId - 0); i++)
+			{
+
+				if (objMng.DxObjMem[i]->empty == false)
+				{
+					currentObj = objMng.DxObjMem[i];
+					currentObj->empty = false;
+					currentObj->objId = i;
+					NoEmptyUnity = false;
+					currentObjId = i;
+					break;
+				}
+			}
+		}
+
+		if (NoEmptyUnity)
+		{
+			objMng.DxObjMem[objMng.endObjId] = new DxTriangleMesh();
+			currentObj = objMng.DxObjMem[objMng.endObjId];
+			currentObj->objId = objMng.endObjId;
+			currentObjId = objMng.endObjId;
+			currentObj->empty = false;
+			scene.endUnityId++;
+		}
+
+		//create mesh info in the DxObj
+		currentObj->vertexNum = vertices.size();
+		currentObj->faceNum = pMesh->GetPolygonCount();
+		currentObj->vData = new vertexData[vertices.size()];
+		currentObj->indices = new WORD[vertices.size()];
+
+		for (size_t i = 0; i < vertices.size(); i++)
+		{
+			currentObj->vData[i].Pos = XMFLOAT3(vertices[i].mData[0],
+												vertices[i].mData[1], 
+												vertices[i].mData[2]);
+			currentObj->vData[i].Normal = XMFLOAT3(normals[i].mData[0],
+													normals[i].mData[1],
+													normals[i].mData[2]);
+			currentObj->vData[i].Tex = XMFLOAT2(uvs[i].mData[0],
+												uvs[i].mData[1]);
+			currentObj->indices[i] = index[i];
+		}
+	}
+	else
+	{
+		return;
+	}
+
 }
 
 
