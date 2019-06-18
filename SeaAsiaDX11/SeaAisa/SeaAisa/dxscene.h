@@ -16,7 +16,8 @@ public:
 	ObjectType type;
 
 	Point Pos;
-	Matrix4x4 transform;
+	Transform transform;
+	Transform wolrdTransform;
 
 	int objId;
 
@@ -37,7 +38,8 @@ public:
 
 	Unity() {
 		Pos = Point(0.f, 0.f, 0.f);
-		transform = XMMatrixIdentity();
+		transform = Transform();
+		wolrdTransform = Transform();
 
 		objId = 0;
 		textureId = 0;

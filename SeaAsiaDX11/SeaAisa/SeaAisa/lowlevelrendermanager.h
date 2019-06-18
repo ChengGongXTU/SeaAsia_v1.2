@@ -34,7 +34,7 @@ public:
 	void ReverseUnityNormal(BasicManager &basicMng, Unity &unity);
 	void ReverseUnityNormalZaxis(BasicManager &basicMng, Unity &unity);
 	void RenderMaterialChange(BasicManager &basicMng, int materialID, MaterialParameter &para,int type);
-	void LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicManager &basicMng);
+	void LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicManager &basicMng, Unity* unity);
 	void LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int childIndex, DxScene &scene, BasicManager &basicMng);
 	
 };

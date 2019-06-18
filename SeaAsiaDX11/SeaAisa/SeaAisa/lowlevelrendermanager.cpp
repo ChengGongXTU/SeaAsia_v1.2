@@ -434,7 +434,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scen
 }
 
 void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int childInex, DxScene & scene, BasicManager & basicMng)
-{	
+{
 
 	Unity* currentUnity = NULL;
 	int currentUnityID = NULL;
@@ -445,7 +445,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 	{
 		for (int i = 0; i < (scene.endUnityId - 0); i++)
 		{
-			 
+
 			if (scene.unityList[i].empty == true)
 			{
 				currentUnity = &scene.unityList[i];
@@ -467,18 +467,89 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		currentUnity->empty = false;
 		scene.endUnityId++;
 	}
-	
+
 	//find parent unity
 	if (pParentUnity != NULL && childInex >= 0)
 	{
 		currentUnity->parent = pParentUnity;
 		pParentUnity->childs[childInex] = &scene.unityList[currentUnityID];
-		
+
 	}
 
-	//get nodeinfo
+	//get nameinfo
 	const char* name = pNode->GetName();
+	int charLen = strlen(name);
+	if (charLen > 0)
+	{
+		currentUnity->name = new char[charLen];
+		strcpy(currentUnity->name, name);
+	}
+	else
+	{
+		currentUnity->name = "unity";
+	}
 
+	//get transform
+
+	if (pNode->GetNodeAttribute())
+	{
+		if (&currentUnity->transform == NULL || &currentUnity->transform == nullptr)
+		{
+			currentUnity->transform = Transform();
+
+
+		}
+
+		if (&currentUnity->wolrdTransform == NULL || &currentUnity->wolrdTransform == nullptr)
+		{
+			currentUnity->wolrdTransform = Transform();
+
+
+		}
+
+		//geometry transform
+		FbxVector4 translate1 = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+		FbxVector4 rotate1 = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+		FbxVector4 scale1 = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+
+		FbxMatrix geoM;
+		geoM.SetIdentity();
+		geoM.SetTRS(translate1, rotate1, scale1);
+		
+		//global transform
+		FbxMatrix globalM;
+		globalM.SetIdentity();
+		globalM = pNode->EvaluateGlobalTransform();
+		globalM *= geoM;
+		currentUnity->wolrdTransform = Transform(globalM.Double44);
+		currentUnity->Pos = Point(globalM.Get(3, 0), globalM.Get(3, 1), globalM.Get(3, 2));
+
+		//local transform
+		FbxMatrix localM;
+		localM.SetIdentity();
+		localM = pNode->EvaluateLocalTransform();
+		localM *= geoM;
+		currentUnity->transform = Transform(localM.Double44);
+
+	}
+	else
+	{
+		if (&currentUnity->transform == NULL || &currentUnity->transform == nullptr)
+		{
+			currentUnity->transform = Transform();
+
+
+		}
+
+		if (&currentUnity->wolrdTransform == NULL || &currentUnity->wolrdTransform == nullptr)
+		{
+			currentUnity->wolrdTransform = Transform();
+
+
+		}
+	}
+		
+	//get mesh info
 	if (pNode->GetNodeAttribute())
 	{
 		FbxNodeAttribute::EType type = pNode->GetNodeAttribute()->GetAttributeType();
@@ -494,7 +565,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		case fbxsdk::FbxNodeAttribute::eSkeleton:
 			break;
 		case fbxsdk::FbxNodeAttribute::eMesh:
-			LoadFBXMesh(pNode, scene, basicMng);
+			LoadFBXMesh(pNode, scene, basicMng, &scene.unityList[currentUnityID]);
 			break;
 		case fbxsdk::FbxNodeAttribute::eNurbs:
 			break;
@@ -549,7 +620,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 
 }
 
-void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicManager &basicMng)
+void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicManager &basicMng, Unity *unity)
 {	
 	//get mesh
 	FbxMesh *pMesh = NULL;
@@ -561,6 +632,11 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 
 	int controlPointCount = pMesh->GetDeformerCount();
 	FbxVector4 *controlPoints = pMesh->GetControlPoints();
+
+	FbxGeometryElementNormal * normal = pMesh->GetElementNormal(0);
+	FbxGeometryElementUV* uv = pMesh->GetElementUV(0);
+
+	
 }
 
 

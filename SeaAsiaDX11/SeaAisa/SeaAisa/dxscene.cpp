@@ -28,7 +28,8 @@ void DxScene::setUp(int uniNum, int camNum, int plNum, int dlNum) {
 		unityList[i].textureId = -1;
 		unityList[i].MaterialsIdIndex = NULL;
 		unityList[i].Pos = Point(0.f, 0.f, 0.f);
-		unityList[i].transform = MatrixIdentity().m;
+		unityList[i].transform = Transform();
+		unityList[i].wolrdTransform = Transform();
 		unityList[i].UnityId = -1;
 		unityList[i].parent = NULL;
 		unityList[i].childs = NULL;
