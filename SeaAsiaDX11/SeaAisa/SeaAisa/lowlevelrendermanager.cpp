@@ -376,7 +376,7 @@ bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlNam
 	
 }
 
-bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scene, BasicManager & basicMng, ObjectType type)
+bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scene, BasicManager & basicMng)
 {
 	//initialize 
 	FbxManager* pSdkManager = FbxManager::Create();
@@ -482,7 +482,8 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 	if (charLen > 0)
 	{
 		currentUnity->name = new char[charLen];
-		strcpy(currentUnity->name, name);
+		strcpy_s(currentUnity->name, charLen+1,name);
+		
 	}
 	else
 	{
@@ -521,7 +522,10 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		globalM.SetIdentity();
 		globalM = pNode->EvaluateGlobalTransform();
 		globalM *= geoM;
-		currentUnity->wolrdTransform = Transform(globalM.Double44);
+		currentUnity->wolrdTransform = currentUnity->transform = Transform(Matrix4x4(globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
+			globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
+			globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
+			globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3)));
 		currentUnity->Pos = Point(globalM.Get(3, 0), globalM.Get(3, 1), globalM.Get(3, 2));
 
 		//local transform
@@ -529,7 +533,10 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		localM.SetIdentity();
 		localM = pNode->EvaluateLocalTransform();
 		localM *= geoM;
-		currentUnity->transform = Transform(localM.Double44);
+		currentUnity->transform = Transform(Matrix4x4(localM.Get(0,0), localM.Get(0,1), localM.Get(0,2), localM.Get(0,3),
+			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3),
+			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3),
+			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3)));
 
 	}
 	else
@@ -755,7 +762,7 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 		//create DxObj
 		ObjManager& objMng = basicMng.objManager;
 		int currentObjId = NULL;
-		DxObj* currentObj;
+		DxObj* currentObj = NULL;
 		bool NoEmptyUnity = true;
 
 		if (objMng.endObjId > 0)
@@ -802,6 +809,58 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			currentObj->vData[i].Tex = XMFLOAT2(uvs[i].mData[0],
 												uvs[i].mData[1]);
 			currentObj->indices[i] = index[i];
+		}
+
+
+		//create material index for mesh
+		vector<int> matIndices;
+		FbxLayerElementMaterial* pFbxMat = pMesh->GetElementMaterial();
+
+		if (pFbxMat)
+		{
+			if (&pFbxMat->GetIndexArray())
+			{	
+				//load material indices
+				switch (pFbxMat->GetMappingMode())
+				{
+				case FbxGeometryElement::eByPolygon:
+				{
+					if (pFbxMat->GetIndexArray().GetCount() == polygonCount)
+					{
+						for (int i = 0; i < polygonCount; i++)
+						{
+							int matIndex = pFbxMat->GetIndexArray().GetAt(i);
+							matIndices.push_back(i);
+						}
+					}
+				}
+				break;
+
+				case FbxGeometryElement::eAllSame:
+				{
+
+					for (int i = 0; i < polygonCount; i++)
+					{
+						int matIndex = pFbxMat->GetIndexArray().GetAt(i);
+						matIndices.push_back(i);
+					}
+
+				}
+				break;
+
+				default:
+					break;
+				}
+
+				//save material indices
+				currentObj->materialNum = pMesh->GetElementMaterialCount();
+				currentObj->faceMaterialIndices = new int[polygonCount];
+				for (int i = 0; i < polygonCount; i++)
+				{
+					currentObj->faceMaterialIndices[i] = matIndices[i];
+				}
+				
+			}
 		}
 	}
 	else

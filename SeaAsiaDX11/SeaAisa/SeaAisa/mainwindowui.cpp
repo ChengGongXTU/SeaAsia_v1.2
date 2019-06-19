@@ -616,6 +616,41 @@ static void UnityLoadingView(BasicManager &basicMng, LowLevelRendermanager &rend
 		ImGui::Text(error.c_str());
 	}
 
+	if (type == 2)
+	{
+		static wstring objName;
+		static wstring mtlName;
+		static wstring textureName;
+		static string error = "no error!";
+
+		static char str1[128] = "h.fbx";
+
+		ImGui::InputText("Input OBJ File Name", str1, 128);
+		objName = CharToWstring(str1);
+
+		if (ImGui::BeginPopupModal("fbx error"))
+		{
+			ImGui::Text("can't load fbx file!");
+			if (ImGui::Button("close"))	ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::Button("OK", ImVec2(-1, 20)))
+		{
+			if (renderMng.LoadUnityFromFBXFile( objName, basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId], basicMng))
+			{
+				show_unity_load_view = false;
+			}
+			else 
+			{
+				ImGui::OpenPopup("fbx error");
+
+			}
+
+		}
+		ImGui::Text(error.c_str());
+	}
+
 	ImGui::End();
 }
 
@@ -1165,7 +1200,7 @@ static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng)
 					for (int i = 0; i < unity.childCount; i++)
 					{
 						ImGui::PushID(i); // Use field index as identifier.
-						ShowDummyObject(unity.childs[i], 424242);
+						ShowDummyObject(*unity.childs[i], 424242);
 						ImGui::PopID();
 					}					
 				}
