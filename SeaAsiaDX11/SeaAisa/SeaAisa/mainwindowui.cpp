@@ -213,8 +213,6 @@ static void ScenenResourceView(WindowsDevice & winDev, BasicManager &basicMng, L
 
 						ImGui::Text("Triangle Mesh ID: %d", unity.objId);
 						ImGui::Text("Material Number: %d", unity.materialNum);
-						ImGui::Text("Texture ID: %d", unity.textureId);
-						ImGui::Text("Position in world: %f %f %f", unity.Pos.x, unity.Pos.y, unity.Pos.z);
 
 						if (ImGui::Button("Reverse normal"))
 						{
@@ -637,7 +635,7 @@ static void UnityLoadingView(BasicManager &basicMng, LowLevelRendermanager &rend
 
 		if (ImGui::Button("OK", ImVec2(-1, 20)))
 		{
-			if (renderMng.LoadUnityFromFBXFile( objName, basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId], basicMng))
+			if (renderMng.LoadUnityFromFBXFile(str1, basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId], basicMng))
 			{
 				show_unity_load_view = false;
 			}

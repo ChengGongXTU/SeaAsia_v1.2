@@ -21,7 +21,7 @@ struct MaterialParameter {
 class DxMaterials {
 public:
 	MaterialParameter parameter;
-
+	bool empty;
 
 
 

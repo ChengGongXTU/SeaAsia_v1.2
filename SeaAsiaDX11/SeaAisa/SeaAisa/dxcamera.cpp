@@ -39,6 +39,13 @@ void DxCamera::Init(float x, float y, float z, float x1, float y1, float z1, flo
 	mView = LookAt(eye, at, up).m;
 	mView2 = MatrixIdentity().m;
 	mProjection = MatrixPerspectiveFov(aspect, cWidth / cHeight, cNear, cFar).m;
+
+	Vector dir = at - eye;
+	XMVECTOR xmDir = XMVectorSet(dir.x, dir.y, dir.z,0.0);
+	XMVECTOR Zdir = XMVectorSet(0.0, 0.0, 1.0, 0.0);
+	XMVECTOR angles = XMVector3AngleBetweenVectors(xmDir, Zdir);
+	quaternion = XMQuaternionRotationRollPitchYawFromVector(angles);
+
 }
 
 void DxCamera::moveView(float x, float y, float z) {

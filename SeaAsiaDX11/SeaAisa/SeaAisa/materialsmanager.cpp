@@ -16,6 +16,7 @@ void MaterialsManager::CreateDxMemory(int mtlNum)
 		dxMaterial[i].parameter.illum = 0.f;
 		dxMaterial[i].parameter.Ni = 0.f;
 		dxMaterial[i].parameter.Ns = 0;
+		dxMaterial[i].empty = true;
 	}
 }
 

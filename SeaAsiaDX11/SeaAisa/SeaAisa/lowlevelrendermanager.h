@@ -24,7 +24,7 @@ public:
 
 	bool LoadUnityFromObjFile(wstring objName, wstring mtlName, wstring textureName,DxScene &scene,
 		BasicManager &basicMng,ObjectType type);
-	bool LoadUnityFromFBXFile(wstring fbxName, DxScene &scene,BasicManager &basicMng);
+	bool LoadUnityFromFBXFile(const char* fbxName, DxScene &scene,BasicManager &basicMng);
 	bool SetScene(DxDevice &dev,DxScene &scene);
 	bool DrawUnity(BasicManager &basicMng, Unity &unity);
 	bool DrawSceneUnity(BasicManager & basicMng, int SceneId, int cameraId, int dlightId);

@@ -22,6 +22,8 @@ public:
 	Matrix4x4 mView;
 	Matrix4x4 mView2;
 
+	XMVECTOR quaternion;
+
 	DxCamera() {}
 
 	void Init(WindowsDevice &Dev);

@@ -65,8 +65,9 @@ bool LowLevelRendermanager::DrawUnity(BasicManager & basicMng, Unity & unity)
 		basicMng.dxDevice.context->PSSetConstantBuffers(4, 1, &materialConstant);
 
 		//draw mesh which belong to this material
-		basicMng.dxDevice.context->DrawIndexed(basicMng.objManager.DxObjMem[unity.objId]->FaceNumInEachMtl[i] * 3,
-			basicMng.objManager.DxObjMem[unity.objId]->beginFaceInEachMtl[i]*3, 0);
+		//basicMng.dxDevice.context->DrawIndexed(basicMng.objManager.DxObjMem[unity.objId]->FaceNumInEachMtl[i] * 3,
+			//basicMng.objManager.DxObjMem[unity.objId]->beginFaceInEachMtl[i]*3, 0);
+		basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
 	}
 
 	//basicMng.dxDevice.context->UpdateSubresource(materialConstant, 0, 0,
@@ -376,15 +377,18 @@ bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlNam
 	
 }
 
-bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scene, BasicManager & basicMng)
+bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & scene, BasicManager & basicMng)
 {
-	//initialize 
+	//initialize manager
 	FbxManager* pSdkManager = FbxManager::Create();
 	FbxIOSettings* ios = FbxIOSettings::Create(pSdkManager, IOSROOT);
 	pSdkManager->SetIOSettings(ios);
+
+	FbxString lExtension = "dll";
 	FbxString lPath = FbxGetApplicationDirectory();
-	pSdkManager->LoadPluginsDirectory(lPath.Buffer());
-	FbxScene* pScene = FbxScene::Create(pSdkManager, "My Scene");
+	pSdkManager->LoadPluginsDirectory(lPath.Buffer(), lExtension.Buffer());
+
+	FbxScene* pScene = FbxScene::Create(pSdkManager, "");
 
 	//loadscene
 	int lFileMajor, lFileMinor, lFileRevision;
@@ -395,6 +399,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scen
 	FbxImporter* lImporter = NULL;
 	bool lImportStatus = false;
 
+	/*
 	const wchar_t *wchar = fbxName.c_str();
 	char * m_char = NULL;
 	int len = WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), NULL, 0, NULL, NULL);
@@ -408,7 +413,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scen
 		m_char = new char[len + 1];
 		WideCharToMultiByte(CP_ACP, 0, wchar, wcslen(wchar), m_char, len, NULL, NULL);
 	}
-
+	*/
 	if (pSdkManager == NULL)
 	{
 		return false;
@@ -418,7 +423,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(wstring fbxName, DxScene & scen
 		// Get the file version number generate by the FBX SDK.
 		FbxManager::GetFileFormatVersion(lSDKMajor, lSDKMinor, lSDKRevision);
 		lImporter = FbxImporter::Create(pSdkManager, "");
-		lImportStatus = lImporter->Initialize(m_char, -1, pSdkManager->GetIOSettings());
+		lImportStatus = lImporter->Initialize(fbxName, -1, pSdkManager->GetIOSettings());
 		lImporter->GetFileVersion(lFileMajor, lFileMinor, lFileRevision);
 	}
 	pScene->Clear();
@@ -624,6 +629,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 			LoadFbxNode(pNode->GetChild(i), &scene.unityList[currentUnityID], i, scene, basicMng);
 		}
 	}
+	return;
 
 }
 
@@ -646,6 +652,7 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 		vector<FbxVector2> uvs;
 		vector<int> index;
 
+		//load vertex
 		for (int i = 0; i < polygonCount; i++)
 		{
 			for (int j = 0; j < 3; j++)
@@ -654,109 +661,167 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 				int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
 				vertices.push_back(pControlPoint[controlPoinIndex]);
 				index.push_back(i * 3 + j);
+			}
+		}
 
-				//load vertex normal
-				FbxGeometryElementNormal* pFbxNormals = pMesh->GetElementNormal(0);
-				switch (pFbxNormals->GetMappingMode())
+		//load vertex normal
+		FbxGeometryElementNormal* pFbxNormals = pMesh->GetElementNormal(0);
+		if (pFbxNormals)
+		{
+			switch (pFbxNormals->GetMappingMode())
+			{
+				case FbxGeometryElement::eByControlPoint:
 				{
-					case FbxGeometryElement::eByControlPoint:
+					switch (pFbxNormals->GetReferenceMode())
 					{
-						switch (pFbxNormals->GetReferenceMode())
-						{
-							case FbxGeometryElement::eDirect:
-							{
-								normals.push_back(pFbxNormals->GetDirectArray().GetAt(controlPoinIndex));
-							}
-							break;
-
-							case FbxGeometryElement::eIndexToDirect:
-							{
-								normals.push_back(pFbxNormals->GetDirectArray().GetAt(pFbxNormals->GetIndexArray().GetAt(controlPoinIndex)));
-							}
-							break;
-
-							default:
-								break;
-						}
-					}
-					break;
-
-					case FbxGeometryElement::eByPolygonVertex:
-					{
-						switch (pFbxNormals->GetReferenceMode())
-						{
-							case FbxGeometryElement::eDirect:
-							{
-								normals.push_back(pFbxNormals->GetDirectArray().GetAt(i*3 + j));
-							}
-							break;
-
-							case FbxGeometryElement::eIndexToDirect:
-							{
-								normals.push_back(pFbxNormals->GetDirectArray().GetAt(pFbxNormals->GetIndexArray().GetAt(i*3 + j)));
-							}
-							break;
-
-							default:
-								break;
-						}
-					}
-					break;
-
-				}
-
-				//load uv0
-				FbxGeometryElementUV* pFbxUVs = pMesh->GetElementUV(0);
-				switch (pFbxUVs->GetMappingMode())
-				{
-					case FbxGeometryElement::eByControlPoint:
-					{
-						switch (pFbxUVs->GetReferenceMode())
-						{
 						case FbxGeometryElement::eDirect:
-						{
-							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(controlPoinIndex));
-						}
+						{	
+							for (int i = 0; i < polygonCount; i++)
+							{
+								for (int j = 0; j < 3; j++)
+								{
+									int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+									normals.push_back(pFbxNormals->GetDirectArray().GetAt(controlPoinIndex));
+								}
+							}
+						}		
 						break;
 
 						case FbxGeometryElement::eIndexToDirect:
-						{
-							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(pFbxUVs->GetIndexArray().GetAt(controlPoinIndex)));
+						{	
+							for (int i = 0; i < polygonCount; i++)
+							{
+								for (int j = 0; j < 3; j++)
+								{
+									int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+									normals.push_back(pFbxNormals->GetDirectArray().GetAt(pFbxNormals->GetIndexArray().GetAt(controlPoinIndex)));
+								}
+							}
 						}
 						break;
 
 						default:
 							break;
-						}
 					}
-					break;
+				}
+				break;
 
-					case FbxGeometryElement::eByPolygonVertex:
+				case FbxGeometryElement::eByPolygonVertex:
+				{
+					switch (pFbxNormals->GetReferenceMode())
 					{
-						switch (pFbxUVs->GetReferenceMode())
-						{
 						case FbxGeometryElement::eDirect:
 						{
-							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(i * 3 + j));
+							for (int i = 0; i < polygonCount; i++)
+							{
+								for (int j = 0; j < 3; j++)
+								{
+									normals.push_back(pFbxNormals->GetDirectArray().GetAt(i * 3 + j));
+								}
+							}
 						}
 						break;
 
 						case FbxGeometryElement::eIndexToDirect:
 						{
-							uvs.push_back(pFbxUVs->GetDirectArray().GetAt(pFbxUVs->GetIndexArray().GetAt(i * 3 + j)));
+							for (int i = 0; i < polygonCount; i++)
+							{
+								for (int j = 0; j < 3; j++)
+								{
+									normals.push_back(pFbxNormals->GetDirectArray().GetAt(pFbxNormals->GetIndexArray().GetAt(i * 3 + j)));
+								}
+							}
 						}
 						break;
 
 						default:
 							break;
-						}
 					}
-					break;
-
 				}
-
+				break;
 
 			}
+
+		}
+
+		//load uv0
+		FbxGeometryElementUV* pFbxUVs = pMesh->GetElementUV(0);
+		if (pFbxUVs)
+		{
+			switch (pFbxUVs->GetMappingMode())
+			{
+				case FbxGeometryElement::eByControlPoint:
+				{
+					switch (pFbxUVs->GetReferenceMode())
+					{
+					case FbxGeometryElement::eDirect:
+					{
+						for (int i = 0; i < polygonCount; i++)
+						{
+							for (int j = 0; j < 3; j++)
+							{
+								int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+								uvs.push_back(pFbxUVs->GetDirectArray().GetAt(controlPoinIndex));
+							}
+						}
+					}
+					break;
+
+					case FbxGeometryElement::eIndexToDirect:
+					{
+						for (int i = 0; i < polygonCount; i++)
+						{
+							for (int j = 0; j < 3; j++)
+							{
+								int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+								uvs.push_back(pFbxUVs->GetDirectArray().GetAt(pFbxUVs->GetIndexArray().GetAt(controlPoinIndex)));
+							}
+						}
+					}
+					break;
+
+					default:
+						break;
+					}
+				}
+				break;
+
+				case FbxGeometryElement::eByPolygonVertex:
+				{
+					switch (pFbxUVs->GetReferenceMode())
+					{
+					case FbxGeometryElement::eDirect:
+					{
+						for (int i = 0; i < polygonCount; i++)
+						{
+							for (int j = 0; j < 3; j++)
+							{
+								uvs.push_back(pFbxUVs->GetDirectArray().GetAt(i * 3 + j));
+							}
+						}
+					}
+					break;
+
+					case FbxGeometryElement::eIndexToDirect:
+					{
+						for (int i = 0; i < polygonCount; i++)
+						{
+							for (int j = 0; j < 3; j++)
+							{
+								uvs.push_back(pFbxUVs->GetDirectArray().GetAt(pFbxUVs->GetIndexArray().GetAt(i * 3 + j)));
+							}
+						}
+					}
+					break;
+
+					default:
+						break;
+					}
+				}
+				break;
+
+			}
+
 		}
 		
 		//create DxObj
@@ -770,13 +835,15 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			for (int i = 0; i < (objMng.endObjId - 0); i++)
 			{
 
-				if (objMng.DxObjMem[i]->empty == false)
-				{
+				if (objMng.DxObjMem[i]->empty == true)
+				{	
 					currentObj = objMng.DxObjMem[i];
 					currentObj->empty = false;
 					currentObj->objId = i;
 					NoEmptyUnity = false;
 					currentObjId = i;
+					unity->objId = currentObjId;
+					objMng.ObjNumber++;
 					break;
 				}
 			}
@@ -788,8 +855,10 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			currentObj = objMng.DxObjMem[objMng.endObjId];
 			currentObj->objId = objMng.endObjId;
 			currentObjId = objMng.endObjId;
+			unity->objId = currentObjId;
 			currentObj->empty = false;
-			scene.endUnityId++;
+			objMng.endObjId++;
+			objMng.ObjNumber++;
 		}
 
 		//create mesh info in the DxObj
@@ -803,11 +872,27 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			currentObj->vData[i].Pos = XMFLOAT3(vertices[i].mData[0],
 												vertices[i].mData[1], 
 												vertices[i].mData[2]);
-			currentObj->vData[i].Normal = XMFLOAT3(normals[i].mData[0],
-													normals[i].mData[1],
-													normals[i].mData[2]);
-			currentObj->vData[i].Tex = XMFLOAT2(uvs[i].mData[0],
-												uvs[i].mData[1]);
+			if (normals.size() == vertices.size())
+			{
+				currentObj->vData[i].Normal = XMFLOAT3(normals[i].mData[0],
+														normals[i].mData[1],
+														normals[i].mData[2]);
+			}
+			else
+			{
+				currentObj->vData[i].Normal = XMFLOAT3(0.0, 0.0, 0.0);
+			}
+
+			if (uvs.size() == vertices.size())
+			{
+				currentObj->vData[i].Tex = XMFLOAT2(uvs[i].mData[0],
+													uvs[i].mData[1]);
+			}
+			else
+			{
+				currentObj->vData[i].Tex = XMFLOAT2(0.0, 0.0);
+			}
+
 			currentObj->indices[i] = index[i];
 		}
 
@@ -830,7 +915,7 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 						for (int i = 0; i < polygonCount; i++)
 						{
 							int matIndex = pFbxMat->GetIndexArray().GetAt(i);
-							matIndices.push_back(i);
+							matIndices.push_back(matIndex);
 						}
 					}
 				}
@@ -842,7 +927,7 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 					for (int i = 0; i < polygonCount; i++)
 					{
 						int matIndex = pFbxMat->GetIndexArray().GetAt(i);
-						matIndices.push_back(i);
+						matIndices.push_back(matIndex);
 					}
 
 				}
@@ -855,12 +940,162 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 				//save material indices
 				currentObj->materialNum = pMesh->GetElementMaterialCount();
 				currentObj->faceMaterialIndices = new int[polygonCount];
+
 				for (int i = 0; i < polygonCount; i++)
 				{
 					currentObj->faceMaterialIndices[i] = matIndices[i];
 				}
+	
+				//optimize material and mesh
+				if (currentObj->materialNum > 1)
+				{
+					vector<int> opIndices;
+					vector<int> opMatIndices;
+					vector<int> eachMatFaceCount;
+
+					for (int matIndex =0; matIndex < currentObj->materialNum; matIndex++)
+					{	
+						int faceCount = 0;
+						for (int i = 0; i < polygonCount; i++)
+						{
+							if (currentObj->faceMaterialIndices[i] == matIndex)
+							{	
+								//optimize face-material index
+								opMatIndices.push_back(currentObj->faceMaterialIndices[i]);
+								faceCount++;
+
+								//optimize vertex index
+								for (int j = 0; j < 3; j++)
+								{
+									opIndices.push_back(currentObj->indices[3 * i + j]);
+								}
+							}
+						}
+						eachMatFaceCount.push_back(faceCount);
+
+					}
+
+					for (int i = 0; i < polygonCount*3; i++)
+					{
+						currentObj->indices[i] = opIndices[i];
+					}
+
+					for (int i = 0; i < polygonCount; i++)
+					{
+						currentObj->faceMaterialIndices[i] = opMatIndices[i];
+					}
+
+					//save face begin index
+					currentObj->FaceNumInEachMtl = new int[currentObj->materialNum];
+					currentObj->beginFaceInEachMtl = new int[currentObj->materialNum];
+					for (int i = 0; i < currentObj->materialNum; i++)
+					{
+						currentObj->FaceNumInEachMtl[i] = eachMatFaceCount[i];
+						for (int j = 0; j < polygonCount; j++)
+						{
+							if (currentObj->faceMaterialIndices[j] == i)
+							{
+								currentObj->beginFaceInEachMtl[i] = j;
+								break;
+							}
+						}
+					}
+					
+
+
+
+				}
+				else if(currentObj->materialNum  == 1)
+				{
+					currentObj->beginFaceInEachMtl = new int[1];
+					currentObj->beginFaceInEachMtl[0] = 0;
+					currentObj->FaceNumInEachMtl = new int[1];
+					currentObj->FaceNumInEachMtl[0] = polygonCount;
+				}
 				
+
+				unity->materialNum = currentObj->materialNum;
+				unity->MaterialsIdIndex = new int[unity->materialNum];
+				MaterialsManager& matMng = basicMng.materialsManager;
+				bool NoEmptyMat = true;
+
+				for (int i = 0; i < unity->materialNum; i++)
+				{
+					//create material in material manager:
+					if (matMng.endMtlId > 0)
+					{
+						for (int j = 0; j < (matMng.endMtlId - 0); j++)
+						{
+
+							if (matMng.dxMaterial[j].empty == true)
+							{
+								matMng.dxMaterial[j].empty = false;
+								NoEmptyMat = false;
+								unity->MaterialsIdIndex[i] = j;
+								matMng.mtlNumber++;
+								break;
+							}
+						}
+					}
+
+					if (NoEmptyMat)
+					{
+						matMng.dxMaterial[matMng.endMtlId].empty = false;
+						unity->MaterialsIdIndex[i] = matMng.endMtlId;
+						matMng.endMtlId++;
+						matMng.mtlNumber++;
+					}
+				}		
 			}
+		}
+		else
+		{
+			if (currentObj->vertexNum > 0)
+			{
+				currentObj->materialNum = 1;
+				currentObj->beginFaceInEachMtl = new int[1];
+				currentObj->beginFaceInEachMtl[0] = 0;
+				currentObj->FaceNumInEachMtl = new int[1];
+				currentObj->FaceNumInEachMtl[0] = polygonCount;
+
+
+				unity->materialNum = currentObj->materialNum;
+				unity->MaterialsIdIndex = new int[unity->materialNum];
+				MaterialsManager& matMng = basicMng.materialsManager;
+				bool NoEmptyMat = true;
+
+				for (int i = 0; i < unity->materialNum; i++)
+				{
+					//create material in material manager:
+					if (matMng.endMtlId > 0)
+					{
+						for (int j = 0; j < (matMng.endMtlId - 0); j++)
+						{
+
+							if (matMng.dxMaterial[j].empty == true)
+							{
+								matMng.dxMaterial[j].empty = false;
+								NoEmptyMat = false;
+								unity->MaterialsIdIndex[i] = j;
+								matMng.mtlNumber++;
+								break;
+							}
+						}
+					}
+
+					if (NoEmptyMat)
+					{
+						matMng.dxMaterial[matMng.endMtlId].empty = false;
+						unity->MaterialsIdIndex[i] = matMng.endMtlId;
+						matMng.endMtlId++;
+						matMng.mtlNumber++;
+					}
+				}
+			}
+
+
+
+
 		}
 	}
 	else

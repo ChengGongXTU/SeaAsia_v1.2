@@ -4,6 +4,9 @@
 #include"lowlevelrendermanager.h"
 #include"mainwindowui.h"
 #include"RayTraceManager.h"
+
+#include "atlbase.h"
+#include "atlstr.h"
 //--------------------------windows app setting ----------------------------------
 WindowsDevice winDevice;
 MSG msg;
@@ -16,6 +19,8 @@ DxDevice *dxdev =NULL;
 LowLevelRendermanager* renderMng = NULL;
 BasicManager* basicMng = NULL;
 WindowsDevice* wnDev = NULL;
+
+void OutputDebugPrintf(const char *strOutputString, ...);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -56,6 +61,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 	ImVec4 clear_col = ImColor(0, 0, 0);
 	bool show_test_window = true;
+
+	float horizontalAngle = 0;
+	float verticalAngle = 0;
 
 	ZeroMemory(&msg, sizeof(msg));
 	while (WM_QUIT != msg.message)
@@ -110,6 +118,44 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 					{
 						cam.eye += Vector(1, 0, 0) * 0.05;
 						cam.at += Vector(1, 0, 0)* 0.05;
+					}
+
+					if (ImGui::IsMouseDown(2))
+					{
+
+						horizontalAngle = 0.005*ImGui::GetIO().MouseDelta.x;
+						verticalAngle = 0.005* ImGui::GetIO().MouseDelta.y;
+
+						cam.eye += Vector(horizontalAngle, 0, 0);
+						cam.eye -= Vector(0, verticalAngle, 0);
+					}
+
+					if (ImGui::IsMouseDown(1))
+					{	
+
+						horizontalAngle -= 0.00001 * (ImGui::GetIO().MousePos.x - ImGui::GetIO().MousePosPrev.x);
+						XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(horizontalAngle, 0.0, 0.0);
+
+						cam.quaternion = XMQuaternionMultiply(cam.quaternion, quaternion);
+
+						XMMATRIX mRotate =  DirectX::XMMatrixRotationQuaternion(cam.quaternion);
+
+						XMVECTOR xmAt = XMVector4Transform(XMVectorSet(cam.at.x, cam.at.y, cam.at.z, 1.0), mRotate);
+
+						cam.at.x = XMVectorGetX(xmAt);
+						cam.at.z = XMVectorGetZ(xmAt);
+						cam.at.y = XMVectorGetY(xmAt);
+						
+						/*
+						XMMATRIX mView = XMLoadFloat4x4(&cam.mView.m);
+						XMMATRIX m = DirectX::XMMatrixRotationRollPitchYaw(horizontalAngle, 0.0, 0.0);
+						mView *= m;
+						Vector dir = cam.at - cam.eye;
+						XMVECTOR v = XMVectorSet(dir.x, dir.y, dir.z, 0.0);
+						XMVECTOR at = XMVector3TransformNormal(v, mView);
+
+						cam.at = Point(XMVectorGetX(at), XMVectorGetY(at), XMVectorGetZ(at));
+						*/
 					}
 					
 					cam.mView = LookAt(cam.eye, cam.at, cam.up).m;
@@ -171,4 +217,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 	return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+void OutputDebugPrintf(const char *strOutputString, ...)
+{
+	char strBuffer[4096] = { 0 };
+	va_list vlArgs;
+	va_start(vlArgs, strOutputString);
+	_vsnprintf_s(strBuffer, sizeof(strBuffer) - 1, strOutputString, vlArgs);
+	//vsprintf(strBuffer, strOutputString, vlArgs);
+	va_end(vlArgs);
+	OutputDebugString(CA2W(strBuffer));
 }
