@@ -2,8 +2,8 @@
 
 void ShaderManager::StartUp()
 {	
-	vsBlob = new ID3DBlob*[100];
-	psBlob = new ID3DBlob*[100];
+	vsBlob = new ID3DBlob*[500];
+	psBlob = new ID3DBlob*[500];
 
 	VS = NULL;
 	PS = NULL;

@@ -10,6 +10,8 @@ public:
 	Point eye;
 	Point at;
 	Vector up;
+	Vector right;
+	Vector dir;
 
 	float cNear;
 	float cFar;

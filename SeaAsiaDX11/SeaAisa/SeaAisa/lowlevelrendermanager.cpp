@@ -536,7 +536,10 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		//local transform
 		FbxMatrix localM;
 		localM.SetIdentity();
-		localM = pNode->EvaluateLocalTransform();
+		if (pNode->EvaluateLocalTransform())
+		{
+			localM = pNode->EvaluateLocalTransform();
+		}
 		localM *= geoM;
 		currentUnity->transform = Transform(Matrix4x4(localM.Get(0,0), localM.Get(0,1), localM.Get(0,2), localM.Get(0,3),
 			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3),

@@ -22,7 +22,7 @@ void MaterialsManager::CreateDxMemory(int mtlNum)
 
 void MaterialsManager::StartUp()
 {
-	CreateDxMemory(500);
+	CreateDxMemory(10000);
 }
 
 void MaterialsManager::ShutUp()

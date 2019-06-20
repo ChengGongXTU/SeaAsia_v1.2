@@ -505,7 +505,7 @@ static void SceneSettingView(BasicManager &basicMng, bool *p_open)
 	}
 	if (ImGui::Button("Add Defeat Number", ImVec2(-1, 20)))
 	{
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].setUp(500, 10, 10, 10);
+		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].setUp(10000, 10, 10, 10);
 		show_scene_setting_view = false;
 	}
 	ImGui::End();

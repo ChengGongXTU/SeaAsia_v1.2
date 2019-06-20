@@ -8,7 +8,7 @@ void ObjManager::StartUp() {
 	ObjNumber = 0;
 	endObjId = 0;
 	currentObjId = 0;
-	CreateDxMemory(500);
+	CreateDxMemory(10000);
 }
 
 void ObjManager::ShutUp() {

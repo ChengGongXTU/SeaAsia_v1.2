@@ -98,27 +98,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 				{
 					
 					DxCamera &cam = basicMng->sceneManager.sceneList[basicMng->sceneManager.currentSceneId].cameraList[basicMng->sceneManager.sceneList[basicMng->sceneManager.currentSceneId].currentCameraId];
-					
+					float speed = 0.05;
+
+					if (ImGui::GetIO().KeyShift)
+					{
+						speed = 0.5;
+					}
+
 					if (ImGui::IsKeyDown(87))
 					{
-						cam.eye += Vector(0, 0, 1)* 0.05;
-						cam.at += Vector(0, 0, 1)* 0.05;
+						cam.eye += cam.dir* speed;
+						cam.at += cam.dir* speed;
 					}
 					if (ImGui::IsKeyDown(83))
 					{
-						cam.eye -= Vector(0, 0, 1)* 0.05;
-						cam.at -= Vector(0, 0, 1)* 0.05;
+						cam.eye -= cam.dir* speed;
+						cam.at -= cam.dir* speed;
 					}
 					if (ImGui::IsKeyDown(65))
 					{
-						cam.eye -= Vector(1, 0, 0)* 0.05;
-						cam.at -= Vector(1, 0, 0)* 0.05;
+						cam.eye -= cam.right* speed;
+						cam.at -= cam.right* speed;
 					}
 					if (ImGui::IsKeyDown(68))
 					{
-						cam.eye += Vector(1, 0, 0) * 0.05;
-						cam.at += Vector(1, 0, 0)* 0.05;
+						cam.eye += cam.right * speed;
+						cam.at += cam.right* speed;
 					}
+
+
 
 					if (ImGui::IsMouseDown(2))
 					{
@@ -126,13 +134,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 						horizontalAngle = 0.005*ImGui::GetIO().MouseDelta.x;
 						verticalAngle = 0.005* ImGui::GetIO().MouseDelta.y;
 
-						cam.eye += Vector(horizontalAngle, 0, 0);
-						cam.eye -= Vector(0, verticalAngle, 0);
+						cam.eye += cam.right * horizontalAngle;
+						cam.at += cam.right* horizontalAngle;
+						cam.eye += cam.up* verticalAngle;
+						cam.at += cam.up* verticalAngle;
 					}
 
 					if (ImGui::IsMouseDown(1))
 					{	
+						horizontalAngle += 0.001*ImGui::GetIO().MouseDelta.x;
+						verticalAngle += 0.001* ImGui::GetIO().MouseDelta.y;
+						float distance = (cam.at - cam.eye).Length();
+						XMVECTOR zoom = XMVectorSet(0.0, 0.0, -distance, 1.0f);
+						XMMATRIX rotation = XMMatrixRotationRollPitchYaw(verticalAngle, horizontalAngle, 0.0f);
+						zoom = XMVector3Transform(zoom, rotation);
 
+						cam.at = cam.eye - Vector(XMVectorGetX(zoom), XMVectorGetY(zoom), XMVectorGetZ(zoom));
+
+						XMVECTOR up = XMVectorSet(0.0, 1.0, 0.0, 1.0f);
+						up = XMVector3Transform(up, rotation);
+						
+						cam.up = Vector(XMVectorGetX(up), XMVectorGetY(up), XMVectorGetZ(up));
+
+						XMVECTOR right = XMVectorSet(1.0, 0.0, 0.0, 1.0f);
+						right = XMVector3Transform(right, rotation);
+
+						cam.right = Normalize(Vector(XMVectorGetX(right), XMVectorGetY(right), XMVectorGetZ(right)));
+						
+						cam.dir = Normalize(cam.at - cam.eye);
+
+						/*
 						horizontalAngle -= 0.00001 * (ImGui::GetIO().MousePos.x - ImGui::GetIO().MousePosPrev.x);
 						XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(horizontalAngle, 0.0, 0.0);
 
@@ -145,7 +176,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 						cam.at.x = XMVectorGetX(xmAt);
 						cam.at.z = XMVectorGetZ(xmAt);
 						cam.at.y = XMVectorGetY(xmAt);
-						
+						*/
 						/*
 						XMMATRIX mView = XMLoadFloat4x4(&cam.mView.m);
 						XMMATRIX m = DirectX::XMMatrixRotationRollPitchYaw(horizontalAngle, 0.0, 0.0);
@@ -168,7 +199,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 		
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv, (float*)&clear_col);
-		lowlevelrendermanager.RenderScene(basicManager,winDevice, RenderSceneId);
+		//lowlevelrendermanager.RenderScene(basicManager,winDevice, RenderSceneId);
 		ImGui::Render();
 		basicManager.dxDevice.swapChain->Present(0, 0);
 	}
