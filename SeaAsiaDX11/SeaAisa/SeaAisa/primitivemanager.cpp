@@ -37,7 +37,10 @@ void PrimitiveManager::ShutUp()
 }
 
 bool PrimitiveManager::LoadUnity(DxDevice &dev,ObjManager &objMng,Unity & unity)
-{
+{	
+	if (vertexBuffer != NULL) vertexBuffer->Release();
+	if (indexBuffer != NULL) indexBuffer->Release();
+
 	if (objId == -1) {
 
 		ZeroMemory(&bd, sizeof(bd));
@@ -70,8 +73,6 @@ bool PrimitiveManager::LoadUnity(DxDevice &dev,ObjManager &objMng,Unity & unity)
 
 	if (objId != unity.objId && objId != -1) {
 		
-		vertexBuffer->Release();
-		indexBuffer->Release();
 		ZeroMemory(&bd, sizeof(bd));
 		ZeroMemory(&data, sizeof(data));
 
@@ -102,7 +103,7 @@ bool PrimitiveManager::LoadUnity(DxDevice &dev,ObjManager &objMng,Unity & unity)
 
 bool PrimitiveManager::InputVertexBuffer(DxDevice & dev,Unity &unity, ShaderManager &shaderMng)
 {	
-	
+	if (vertexlayout != NULL)	vertexlayout->Release();
 	HRESULT hr = dev.device->CreateInputLayout(layout, numElements, shaderMng.vsBlob[shaderMng.endVSId-1]->GetBufferPointer(),
 		shaderMng.vsBlob[shaderMng.endVSId-1]->GetBufferSize(), &vertexlayout);
 

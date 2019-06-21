@@ -76,7 +76,7 @@ PS_INPUT VS( VS_INPUT v )
 	o.pos = mul(float4(v.vertex, 1.f),mWorld);
 	o.pos = mul(o.pos, mView);
 	o.pos = mul(o.pos, mProjection);
-    //o.Normal = normalize(mul(float4(o.Normal,0.f),mView));
+    o.normal = normalize(mul(float4(v.normal,0.f), mWorld));
     //o.Tex = v.Tex;
     //o.view = mView;
     return o;
@@ -116,5 +116,5 @@ float4 PS( PS_INPUT i) : SV_Target
 
     }
 	*/
-	return float4(1.f,1.f,1.f,1.f);
+	return i.normal;
 }

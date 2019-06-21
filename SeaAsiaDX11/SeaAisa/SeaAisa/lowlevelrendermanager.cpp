@@ -32,18 +32,22 @@ bool LowLevelRendermanager::SetScene(DxDevice &dev,DxScene & scene)
 
 bool LowLevelRendermanager::DrawUnity(BasicManager & basicMng, Unity & unity)
 {	
-	
+	//vertex
 	if (!primitiveManager.LoadUnity(basicMng.dxDevice, basicMng.objManager, unity))	return false;
 	
 	if (!primitiveManager.InputVertexBuffer(basicMng.dxDevice, unity, shaderManager))	return false;
 	
+	//camera
+	XMMATRIX m = XMLoadFloat4x4(&unity.wolrdTransform.m.m);
+	m = XMMatrixTranspose(m);
+	basicMng.dxDevice.context->UpdateSubresource(cameraManager.worldjTransformBuffer, 0, NULL, &m, 0, 0);
+	basicMng.dxDevice.context->VSSetConstantBuffers(0, 1, &cameraManager.worldjTransformBuffer);
+
 	if (unity.textureId != -1)
 	{
 		basicMng.dxDevice.context->PSSetShaderResources(0, 1, &basicMng.textureManager.texViewPointer[unity.textureId]);
 		basicMng.dxDevice.context->PSSetSamplers(0, 1, &basicMng.textureManager.sampleStatePointer[unity.samplerStateId]);
 	}
-
-
 
 	ID3D11Buffer* materialConstant = NULL;
 	D3D11_BUFFER_DESC bd;
@@ -69,7 +73,7 @@ bool LowLevelRendermanager::DrawUnity(BasicManager & basicMng, Unity & unity)
 			//basicMng.objManager.DxObjMem[unity.objId]->beginFaceInEachMtl[i]*3, 0);
 		basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
 	}
-
+	if(materialConstant != NULL) materialConstant->Release();
 	//basicMng.dxDevice.context->UpdateSubresource(materialConstant, 0, 0,
 	//	&basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[0]].parameter, 0, 0);
 	//basicMng.dxDevice.context->PSSetConstantBuffers(4, 1, &materialConstant);
@@ -430,10 +434,12 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & 
 	lStatus = lImporter->Import(pScene);
 	lImporter->Destroy();
 
-
+	FbxSystemUnit::km. ConvertScene(pScene);
 	FbxNode* pRootNode = pScene->GetRootNode();
 	//read fbx mesh
 	LoadFbxNode(pRootNode, NULL, -1, scene, basicMng);
+	
+	pScene->Destroy();
 	return true;
 
 }
@@ -528,9 +534,9 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		globalM = pNode->EvaluateGlobalTransform();
 		globalM *= geoM;
 		currentUnity->wolrdTransform = currentUnity->transform = Transform(Matrix4x4(globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
-			globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
-			globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
-			globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3)));
+			globalM.Get(1, 0), globalM.Get(1, 1), globalM.Get(1, 2), globalM.Get(1, 3),
+			globalM.Get(2, 0), globalM.Get(2, 1), globalM.Get(2, 2), globalM.Get(2, 3),
+			globalM.Get(3, 0), globalM.Get(3, 1), globalM.Get(3, 2), globalM.Get(3, 3)));
 		currentUnity->Pos = Point(globalM.Get(3, 0), globalM.Get(3, 1), globalM.Get(3, 2));
 
 		//local transform
@@ -542,9 +548,9 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		}
 		localM *= geoM;
 		currentUnity->transform = Transform(Matrix4x4(localM.Get(0,0), localM.Get(0,1), localM.Get(0,2), localM.Get(0,3),
-			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3),
-			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3),
-			localM.Get(0, 0), localM.Get(0, 1), localM.Get(0, 2), localM.Get(0, 3)));
+			localM.Get(1, 0), localM.Get(1, 1), localM.Get(1, 2), localM.Get(1, 3),
+			localM.Get(2, 0), localM.Get(2, 1), localM.Get(2, 2), localM.Get(2, 3),
+			localM.Get(3, 0), localM.Get(3, 1), localM.Get(3, 2), localM.Get(3, 3)));
 
 	}
 	else
@@ -1004,9 +1010,12 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 						}
 					}
 					
-
-
-
+					opIndices.clear();
+					opIndices.shrink_to_fit();
+					opMatIndices.clear();
+					opMatIndices.shrink_to_fit();
+					eachMatFaceCount.clear();
+					eachMatFaceCount.shrink_to_fit();
 				}
 				else if(currentObj->materialNum  == 1)
 				{
@@ -1095,11 +1104,19 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 					}
 				}
 			}
-
-
-
-
 		}
+
+		vertices.clear();
+		vertices.shrink_to_fit();
+		normals.clear();
+		normals.shrink_to_fit();
+		uvs.clear();
+		uvs.shrink_to_fit();
+		index.clear();
+		index.shrink_to_fit();
+		matIndices.clear();
+		matIndices.shrink_to_fit();
+
 	}
 	else
 	{
