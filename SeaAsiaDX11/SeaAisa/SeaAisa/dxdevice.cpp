@@ -49,12 +49,46 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	}
 
 
-	// create render target view of back buffer texture
-	rtv = 0;
-	ID3D11Texture2D* backbuffer = 0;
+	// create render target view array and RT textures
+	D3D11_TEXTURE2D_DESC textureDesc;
+	ZeroMemory(&textureDesc, sizeof(textureDesc));
+	textureDesc.Width = Dev.w;
+	textureDesc.Height = Dev.h;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+
+	device->CreateTexture2D(&textureDesc, NULL, &rtt[1]);
+	device->CreateTexture2D(&textureDesc, NULL, &rtt[2]);
+	device->CreateTexture2D(&textureDesc, NULL, &rtt[3]);
+
+	rtv[0] = rtv[1] = rtv[2] = rtv[3] = 0;
+
+	ID3D11Texture2D* backbuffer;
 	swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backbuffer));  //backbuffer get data from mSwapChain
-	device->CreateRenderTargetView(backbuffer, 0, &rtv);				// use backbufer as render target
+	device->CreateRenderTargetView(backbuffer, 0, &rtv[0]);				// use backbufer as render target
 	Rel(backbuffer);
+
+	//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[1]));  //backbuffer get data from mSwapChain
+	device->CreateRenderTargetView(rtt[1], 0, &rtv[1]);				// use backbufer as render target
+	//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[2]));  //backbuffer get data from mSwapChain
+	device->CreateRenderTargetView(rtt[2], 0, &rtv[2]);				// use backbufer as render target
+	//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[3]));  //backbuffer get data from mSwapChain
+	device->CreateRenderTargetView(rtt[3], 0, &rtv[3]);				// use backbufer as render target
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+	device->CreateShaderResourceView(rtt[1], &shaderResourceViewDesc, &rtsrv[1]);
+	device->CreateShaderResourceView(rtt[2], &shaderResourceViewDesc, &rtsrv[2]);
+	device->CreateShaderResourceView(rtt[3], &shaderResourceViewDesc, &rtsrv[3]);
 
 	// create depth/stencil buffer and view
 	// set the parameter for buffer
@@ -106,7 +140,7 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	dsDSV.Texture2D.MipSlice = 0;
 	hr = device->CreateDepthStencilView(mDepthStencilBuffer, &dsDSV, &dsv);  //get a view for depth buffer resource
 																			 // bind RTV and DSV to Output Merge Stage																						// bind render target and depth/stencil view to output merger stage
-	context->OMSetRenderTargets(1, &rtv, dsv);
+	context->OMSetRenderTargets(1, &rtv[0], dsv);
 	mDepthStencilBuffer->Release();
 
 	//set the viewport
@@ -121,7 +155,10 @@ bool DxDevice::Init(WindowsDevice &Dev)
 
 	//clear the RTV and DSV
 	float color[4] = { 1.0f,0.0f,0.0f,1.0f };
-	context->ClearRenderTargetView(rtv, color);
+	context->ClearRenderTargetView(rtv[0], color);
+	context->ClearRenderTargetView(rtv[1], color);
+	context->ClearRenderTargetView(rtv[2], color);
+	context->ClearRenderTargetView(rtv[3], color);
 	context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH| D3D11_CLEAR_STENCIL, 1.0f, 0);
 	
 	swapChain->Present(0, 0);
@@ -131,7 +168,18 @@ bool DxDevice::Init(WindowsDevice &Dev)
 
 void DxDevice::CleanupRenderTarget()
 {
-	if (rtv) { rtv->Release(); rtv = NULL; }
+	if (rtv[0]) { rtv[0]->Release(); rtv[0] = NULL; }
+	if (rtv[1]) { rtv[1]->Release(); rtv[1] = NULL; }
+	if (rtv[2]) { rtv[2]->Release(); rtv[2] = NULL; }
+	if (rtv[3]) { rtv[3]->Release(); rtv[3] = NULL; }
+	if (rtt[0]) { rtt[0]->Release(); rtt[0] = NULL; }
+	if (rtt[1]) { rtt[1]->Release(); rtt[1] = NULL; }
+	if (rtt[2]) { rtt[2]->Release(); rtt[2] = NULL; }
+	if (rtt[3]) { rtt[3]->Release(); rtt[3] = NULL; }
+	if (rtsrv[0]) { rtsrv[0]->Release(); rtsrv[0] = NULL; }
+	if (rtsrv[1]) { rtsrv[1]->Release(); rtsrv[1] = NULL; }
+	if (rtsrv[2]) { rtsrv[2]->Release(); rtsrv[2] = NULL; }
+	if (rtsrv[3]) { rtsrv[3]->Release(); rtsrv[3] = NULL; }
 }
 
 void DxDevice::CreateRenderTarget()
@@ -139,15 +187,19 @@ void DxDevice::CreateRenderTarget()
 	DXGI_SWAP_CHAIN_DESC sd;
 	swapChain->GetDesc(&sd);
 
-	ID3D11Texture2D* pBackBuffer;
+
 	D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
 	ZeroMemory(&rtv_desc, sizeof(rtv_desc));
 	rtv_desc.Format = sd.BufferDesc.Format;
 	rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+	ID3D11Texture2D* pBackBuffer;
 	swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-	device->CreateRenderTargetView(pBackBuffer, &rtv_desc, &rtv);
-	context->OMSetRenderTargets(1, &rtv, NULL);
+	device->CreateRenderTargetView(pBackBuffer, &rtv_desc, &rtv[0]);
 	pBackBuffer->Release();
+
+	context->OMSetRenderTargets(1, &rtv[0], NULL);
+
 
 }
 

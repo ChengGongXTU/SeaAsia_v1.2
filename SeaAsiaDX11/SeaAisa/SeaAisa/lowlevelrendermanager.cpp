@@ -109,7 +109,11 @@ void LowLevelRendermanager::RenderScene(BasicManager & basicMng, WindowsDevice &
 	/*ResizeRenderpipeline(basicMng, wnDev);*/
 
 	float color[4] = { 0.5f,0.5f,0.5f,1.0f };
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv, color);
+	float black[4] = { 0.0f,0.0f,0.0f,1.0f };
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], color);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH| D3D11_CLEAR_STENCIL, 1.0f,0);
 	
 	shaderManager.InputVertexShader(basicMng.dxDevice);
@@ -129,6 +133,42 @@ void LowLevelRendermanager::RenderScene(BasicManager & basicMng, WindowsDevice &
 	}
 
 }
+
+void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, WindowsDevice &wnDev, int SceneId)
+{
+	DxScene& scene = basicMng.sceneManager.sceneList[SceneId];
+
+	/*ResizeRenderpipeline(basicMng, wnDev);*/
+
+	float color[4] = { 0.5f,0.5f,0.5f,1.0f };
+	float black[4] = { 0.0f,0.0f,0.0f,1.0f };
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], color);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
+	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	basicMng.dxDevice.context->OMSetRenderTargets(3, &basicMng.dxDevice.rtv[1], NULL);
+	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], basicMng.dxDevice.dsv);
+
+	shaderManager.InputVertexShader(basicMng.dxDevice);
+
+	shaderManager.InputPixelShader(basicMng.dxDevice);
+
+	if (cameraManager.viewTransformBuffer != NULL)
+	{
+		cameraManager.LoadCamera(basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
+		cameraManager.InputCamera(basicMng.dxDevice);
+	}
+
+	if (lightManager.DirLightBuffer != NULL)
+	{
+		lightManager.SetDirLight(basicMng.dxDevice, scene.dlList[scene.currentDlId]);
+		DrawSceneUnity(basicMng, SceneId, 0, scene.currentDlId);
+	}
+
+}
+
+
 
 void LowLevelRendermanager::SetViewPort(BasicManager & basicMng, float x, float y, float w, float h, float mind, float maxd)
 {
@@ -155,6 +195,42 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		wnDev.w = w;
 		wnDev.h = h;
 		DxDevice &dxdev = basicMng.dxDevice;		
+
+		// create render target view array and RT textures
+		D3D11_TEXTURE2D_DESC textureDesc;
+		ZeroMemory(&textureDesc, sizeof(textureDesc));
+		textureDesc.Width = w;
+		textureDesc.Height = h;
+		textureDesc.MipLevels = 1;
+		textureDesc.ArraySize = 1;
+		textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		textureDesc.SampleDesc.Count = 1;
+		textureDesc.Usage = D3D11_USAGE_DEFAULT;
+		textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		textureDesc.CPUAccessFlags = 0;
+		textureDesc.MiscFlags = 0;
+
+		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[1]);
+		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[2]);
+		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[3]);
+
+		basicMng.dxDevice.rtv[1] = basicMng.dxDevice.rtv[2] = basicMng.dxDevice.rtv[3] = 0;
+
+		//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[1]));  //backbuffer get data from mSwapChain
+		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[1], 0, &basicMng.dxDevice.rtv[1]);				// use backbufer as render target
+		//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[2]));  //backbuffer get data from mSwapChain
+		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[2], 0, &basicMng.dxDevice.rtv[2]);				// use backbufer as render target
+		//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[3]));  //backbuffer get data from mSwapChain
+		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[3], 0, &basicMng.dxDevice.rtv[3]);				// use backbufer as render target
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+		shaderResourceViewDesc.Format = textureDesc.Format;
+		shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+		shaderResourceViewDesc.Texture2D.MipLevels = 1;
+		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[1], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[1]);
+		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[2], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[2]);
+		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[3], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[3]);
 
 		// create depth/stencil buffer and view
 		// set the parameter for buffer
@@ -206,7 +282,7 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		dsDSV.Texture2D.MipSlice = 0;
 		hr = dxdev.device->CreateDepthStencilView(mDepthStencilBuffer, &dsDSV, &dxdev.dsv);  //get a view for depth buffer resource
 																				 // bind RTV and DSV to Output Merge Stage																						// bind render target and depth/stencil view to output merger stage
-		dxdev.context->OMSetRenderTargets(1, &dxdev.rtv, dxdev.dsv);
+		dxdev.context->OMSetRenderTargets(1, &dxdev.rtv[0], dxdev.dsv);
 		mDepthStencilBuffer->Release();
 
 		
@@ -660,6 +736,8 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 		vector<FbxVector4> normals;
 		vector<FbxVector2> uvs;
 		vector<int> index;
+		vector<FbxVector4> tangents;
+		vector<FbxColor> colors;
 
 		//load vertex
 		for (int i = 0; i < polygonCount; i++)
@@ -751,6 +829,166 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 
 			}
 
+		}
+
+		//load tangent
+		FbxGeometryElementTangent* pFbxTangents = pMesh->GetElementTangent(0);
+		if (pFbxTangents)
+		{
+			switch (pFbxTangents->GetMappingMode())
+			{
+			case FbxGeometryElement::eByControlPoint:
+			{
+				switch (pFbxTangents->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+							tangents.push_back(pFbxTangents->GetDirectArray().GetAt(controlPoinIndex));
+						}
+					}
+				}
+				break;
+
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+							tangents.push_back(pFbxTangents->GetDirectArray().GetAt(pFbxTangents->GetIndexArray().GetAt(controlPoinIndex)));
+						}
+					}
+				}
+				break;
+
+				default:
+					break;
+				}
+			}
+			break;
+
+			case FbxGeometryElement::eByPolygonVertex:
+			{
+				switch (pFbxTangents->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							tangents.push_back(pFbxTangents->GetDirectArray().GetAt(i * 3 + j));
+						}
+					}
+				}
+				break;
+
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							tangents.push_back(pFbxTangents->GetDirectArray().GetAt(pFbxTangents->GetIndexArray().GetAt(i * 3 + j)));
+						}
+					}
+				}
+				break;
+
+				default:
+					break;
+				}
+			}
+			break;
+
+			}
+
+		}
+
+		//load vertx color
+		FbxGeometryElementVertexColor* pFbxColors = pMesh->GetElementVertexColor(0);
+		if (pFbxColors)
+		{
+			switch (pFbxColors->GetMappingMode())
+			{
+			case FbxGeometryElement::eByControlPoint:
+			{
+				switch (pFbxColors->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+							colors.push_back(pFbxColors->GetDirectArray().GetAt(controlPoinIndex));
+						}
+					}
+				}
+				break;
+
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
+							colors.push_back(pFbxColors->GetDirectArray().GetAt(pFbxColors->GetIndexArray().GetAt(controlPoinIndex)));
+						}
+					}
+				}
+				break;
+
+				default:
+					break;
+				}
+			}
+			break;
+
+			case FbxGeometryElement::eByPolygonVertex:
+			{
+				switch (pFbxColors->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							colors.push_back(pFbxColors->GetDirectArray().GetAt(i * 3 + j));
+						}
+					}
+				}
+				break;
+
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					for (int i = 0; i < polygonCount; i++)
+					{
+						for (int j = 0; j < 3; j++)
+						{
+							colors.push_back(pFbxColors->GetDirectArray().GetAt(pFbxColors->GetIndexArray().GetAt(i * 3 + j)));
+						}
+					}
+				}
+				break;
+
+				default:
+					break;
+				}
+			}
+			break;
+
+			}
+			 
 		}
 
 		//load uv0
@@ -892,6 +1130,29 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 				currentObj->vData[i].Normal = XMFLOAT3(0.0, 0.0, 0.0);
 			}
 
+			if (tangents.size() == vertices.size())
+			{
+				currentObj->vData[i].Tangent = XMFLOAT3(tangents[i].mData[0],
+					tangents[i].mData[1],
+					tangents[i].mData[2]);
+			}
+			else
+			{
+				currentObj->vData[i].Tangent = XMFLOAT3(0.0, 0.0, 0.0);
+			}
+
+			if (colors.size() == vertices.size())
+			{
+				currentObj->vData[i].Color = XMFLOAT4(colors[i].mRed,
+					colors[i].mGreen,
+					colors[i].mBlue,
+					colors[i].mAlpha);
+			}
+			else
+			{
+				currentObj->vData[i].Color = XMFLOAT4(1.0, 1.0, 1.0, 1.0);
+			}
+
 			if (uvs.size() == vertices.size())
 			{
 				currentObj->vData[i].Tex = XMFLOAT2(uvs[i].mData[0],
@@ -901,6 +1162,8 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			{
 				currentObj->vData[i].Tex = XMFLOAT2(0.0, 0.0);
 			}
+
+
 
 			currentObj->indices[i] = index[i];
 		}
@@ -1110,6 +1373,10 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 		vertices.shrink_to_fit();
 		normals.clear();
 		normals.shrink_to_fit();
+		tangents.clear();
+		tangents.shrink_to_fit();
+		colors.clear();
+		colors.shrink_to_fit();
 		uvs.clear();
 		uvs.shrink_to_fit();
 		index.clear();

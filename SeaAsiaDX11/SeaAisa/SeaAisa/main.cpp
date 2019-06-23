@@ -40,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 	g_pd3dDevice = basicManager.dxDevice.device;
 	g_pd3dDeviceContext = basicManager.dxDevice.context;
 	dxdev = &basicManager.dxDevice;
-	g_mainRenderTargetView = basicManager.dxDevice.rtv;
+	g_mainRenderTargetView = basicManager.dxDevice.rtv[0];
 
 	// initialize low-level render manager
 	LowLevelRendermanager lowlevelrendermanager;
@@ -198,8 +198,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 		}
 
 		
-		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv, (float*)&clear_col);
-		lowlevelrendermanager.RenderScene(basicManager,winDevice, RenderSceneId);
+		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[0], (float*)&clear_col);
+		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[1], (float*)&clear_col);
+		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[2], (float*)&clear_col);
+		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[3], (float*)&clear_col);
+		lowlevelrendermanager.DeferredRenderScene(basicManager,winDevice, RenderSceneId);
 		ImGui::Render();
 		basicManager.dxDevice.swapChain->Present(0, 0);
 	}
