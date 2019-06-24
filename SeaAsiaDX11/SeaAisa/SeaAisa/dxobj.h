@@ -5,11 +5,11 @@
 #include"BoundBox.h"
 
 struct vertexData {
+	XMFLOAT4 Color;
 	XMFLOAT3 Pos;
 	XMFLOAT3 Normal;
 	XMFLOAT2 Tex;
 	XMFLOAT3 Tangent;
-	XMFLOAT4 Color;
 
 };
 

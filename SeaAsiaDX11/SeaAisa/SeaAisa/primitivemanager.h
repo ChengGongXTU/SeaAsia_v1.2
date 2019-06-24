@@ -9,7 +9,7 @@
 class PrimitiveManager {
 public:
 	int objId;
-	D3D11_INPUT_ELEMENT_DESC layout[3];
+	D3D11_INPUT_ELEMENT_DESC layout[5];
 	UINT numElements;
 	ID3D11InputLayout* vertexlayout;
 

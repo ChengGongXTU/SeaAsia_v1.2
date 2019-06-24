@@ -5,8 +5,16 @@ void ShaderManager::StartUp()
 	vsBlob = new ID3DBlob*[500];
 	psBlob = new ID3DBlob*[500];
 
-	VS = NULL;
-	PS = NULL;
+	VS = new ID3D11VertexShader*[500];
+	PS = new ID3D11PixelShader*[500];
+
+	for (int i = 0; i < 500; i++)
+	{
+		VS[i] = NULL;
+		PS[i] = NULL;
+		vsBlob[i] = NULL;
+		psBlob[i] = NULL;
+	}
 
 	endVSId = 0;
 	currentVSId = 0;
@@ -58,7 +66,7 @@ bool ShaderManager::LoadVertexShader(WCHAR* shaderName, LPCSTR vsMain,LPCSTR vsV
 
 bool ShaderManager::CreateVertexShader(DxDevice & dev, int vsId)
 {
-	HRESULT hr = dev.device->CreateVertexShader(vsBlob[vsId]->GetBufferPointer(), vsBlob[vsId]->GetBufferSize(), 0, &VS);
+	HRESULT hr = dev.device->CreateVertexShader(vsBlob[vsId]->GetBufferPointer(), vsBlob[vsId]->GetBufferSize(), 0, &VS[vsId]);
 
 	if (FAILED(hr))	return 0;
 
@@ -86,7 +94,7 @@ bool ShaderManager::LoadPixelShader(WCHAR* shaderName, LPCSTR psMain, LPCSTR psV
 
 bool ShaderManager::CreatePixelShader(DxDevice & dev, int psId)
 {
-	HRESULT hr = dev.device->CreatePixelShader(psBlob[psId]->GetBufferPointer(), psBlob[psId]->GetBufferSize(), 0, &PS);
+	HRESULT hr = dev.device->CreatePixelShader(psBlob[psId]->GetBufferPointer(), psBlob[psId]->GetBufferSize(), 0, &PS[psId]);
 
 	if (FAILED(hr))	return 0;
 
@@ -100,14 +108,14 @@ bool ShaderManager::LoadAndCreatePixelShader(WCHAR* shaderName, LPCSTR psMain, L
 	return true;
 }
 
-bool ShaderManager::InputVertexShader(DxDevice &dev)
+bool ShaderManager::InputVertexShader(DxDevice &dev, int vsId)
 {
-	dev.context->VSSetShader(VS, NULL, 0);
+	dev.context->VSSetShader(VS[vsId], NULL, 0);
 	return true;
 }
 
-bool ShaderManager::InputPixelShader(DxDevice & dev)
+bool ShaderManager::InputPixelShader(DxDevice & dev, int psId)
 {
-	dev.context->PSSetShader(PS, NULL, 0);
+	dev.context->PSSetShader(PS[psId], NULL, 0);
 	return true;
 }

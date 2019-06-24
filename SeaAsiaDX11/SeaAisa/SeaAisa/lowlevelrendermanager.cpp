@@ -116,9 +116,9 @@ void LowLevelRendermanager::RenderScene(BasicManager & basicMng, WindowsDevice &
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH| D3D11_CLEAR_STENCIL, 1.0f,0);
 	
-	shaderManager.InputVertexShader(basicMng.dxDevice);
+	shaderManager.InputVertexShader(basicMng.dxDevice, 0);
 
-	shaderManager.InputPixelShader(basicMng.dxDevice);
+	shaderManager.InputPixelShader(basicMng.dxDevice, 0);
 	
 	if (cameraManager.viewTransformBuffer != NULL)
 	{
@@ -147,12 +147,33 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	//compute G-buffer
+ 	//------set 3 rtv-----------
 	basicMng.dxDevice.context->OMSetRenderTargets(3, &basicMng.dxDevice.rtv[1], NULL);
+	//------bind vs and ps -----------
+	shaderManager.InputVertexShader(basicMng.dxDevice, 0);
+	shaderManager.InputPixelShader(basicMng.dxDevice, 0);
+	//-----input camera matrix constant-------
+	if (cameraManager.viewTransformBuffer != NULL)
+	{
+		cameraManager.LoadCamera(basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
+		cameraManager.InputCamera(basicMng.dxDevice);
+	}
+	//-------- input light constant--------------
+	if (lightManager.DirLightBuffer != NULL)
+	{
+		lightManager.SetDirLight(basicMng.dxDevice, scene.dlList[scene.currentDlId]);
+	}
+	//draw 
+	DrawSceneUnity(basicMng, SceneId, 0, scene.currentDlId);
+
+	//light shading
 	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], basicMng.dxDevice.dsv);
+	shaderManager.InputVertexShader(basicMng.dxDevice, 1);
+	shaderManager.InputPixelShader(basicMng.dxDevice, 1);
 
-	shaderManager.InputVertexShader(basicMng.dxDevice);
 
-	shaderManager.InputPixelShader(basicMng.dxDevice);
 
 	if (cameraManager.viewTransformBuffer != NULL)
 	{
@@ -510,7 +531,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & 
 	lStatus = lImporter->Import(pScene);
 	lImporter->Destroy();
 
-	FbxSystemUnit::km. ConvertScene(pScene);
+	//FbxSystemUnit::km. ConvertScene(pScene);
 	FbxNode* pRootNode = pScene->GetRootNode();
 	//read fbx mesh
 	LoadFbxNode(pRootNode, NULL, -1, scene, basicMng);

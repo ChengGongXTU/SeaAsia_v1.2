@@ -49,10 +49,12 @@ cbuffer MaterialParameter:register(b4)
 
 //--------------------------------------------------------------------------------------
 struct VS_INPUT
-{
+{	
+	float4 color : COLOR;
     float3 vertex : POSITION;
     float3 normal : NORMAL;
     float2 tex : TEXCOORD0;
+	float3 tangent : TANGENT;
 };
 
 struct PS_INPUT

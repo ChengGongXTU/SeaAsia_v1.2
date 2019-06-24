@@ -202,7 +202,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[1], (float*)&clear_col);
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[2], (float*)&clear_col);
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[3], (float*)&clear_col);
-		lowlevelrendermanager.DeferredRenderScene(basicManager,winDevice, RenderSceneId);
+		lowlevelrendermanager.RenderScene(basicManager,winDevice, RenderSceneId);
 		ImGui::Render();
 		basicManager.dxDevice.swapChain->Present(0, 0);
 	}

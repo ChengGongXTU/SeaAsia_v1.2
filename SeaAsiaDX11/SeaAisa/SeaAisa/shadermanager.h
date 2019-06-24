@@ -8,8 +8,8 @@ public:
 	ID3DBlob** vsBlob;
 	ID3DBlob** psBlob;
 
-	ID3D11VertexShader* VS;
-	ID3D11PixelShader* PS;
+	ID3D11VertexShader** VS;
+	ID3D11PixelShader** PS;
 	ID3DBlob* error;
 
 	int endVSId;
@@ -30,6 +30,6 @@ public:
 	bool LoadPixelShader(WCHAR* shaderName, LPCSTR psMain, LPCSTR psVersion);
 	bool CreatePixelShader(DxDevice &dev, int psId);
 	bool LoadAndCreatePixelShader(WCHAR* shaderName, LPCSTR psMain ,LPCSTR psVersion, DxDevice &dev);
-	bool InputVertexShader(DxDevice &dev);
-	bool InputPixelShader(DxDevice &dev);
+	bool InputVertexShader(DxDevice &dev, int vsId);
+	bool InputPixelShader(DxDevice &dev, int psId);
 };
