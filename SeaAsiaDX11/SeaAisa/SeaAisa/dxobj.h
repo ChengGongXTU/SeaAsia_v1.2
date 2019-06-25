@@ -12,6 +12,11 @@ struct vertexData {
 	XMFLOAT3 Tangent;
 
 };
+struct ScreenQuadVertex
+{
+	XMFLOAT3 Pos;
+	XMFLOAT2 Tex;
+};
 
 
 class DxObj {

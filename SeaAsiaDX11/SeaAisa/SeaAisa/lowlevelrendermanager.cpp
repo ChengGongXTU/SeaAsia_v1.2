@@ -173,7 +173,19 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 	int unityNum = basicMng.sceneManager.sceneList[SceneId].endUnityId;
 	DxScene& scene = basicMng.sceneManager.sceneList[SceneId];
 
-	
+	//pp vertex; two triangles
+	if (!primitiveManager.LoadPPVertex(basicMng.dxDevice, basicMng.objManager))	return false;
+	if (!primitiveManager.InputVertexBufferLightShading(basicMng.dxDevice, shaderManager))	return false;
+
+	//G buffer RT
+	basicMng.dxDevice.context->PSSetShaderResources(0, 1, &basicMng.dxDevice.rtsrv[1]);
+	basicMng.dxDevice.context->PSSetSamplers(0, 1, &basicMng.dxDevice.rtSampler[1]);
+	basicMng.dxDevice.context->PSSetShaderResources(1,1, &basicMng.dxDevice.rtsrv[2]);
+	basicMng.dxDevice.context->PSSetSamplers(1, 1, &basicMng.dxDevice.rtSampler[2]);
+	basicMng.dxDevice.context->PSSetShaderResources(2, 1, &basicMng.dxDevice.rtsrv[3]);
+	basicMng.dxDevice.context->PSSetSamplers(2, 1, &basicMng.dxDevice.rtSampler[3]);
+
+	basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
 
 	return true;
 }
@@ -323,6 +335,27 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[1], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[1]);
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[2], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[2]);
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[3], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[3]);
+
+
+		// create the sampler
+		D3D11_SAMPLER_DESC samplerDescription;
+		samplerDescription.Filter = D3D11_FILTER_ANISOTROPIC;
+		samplerDescription.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDescription.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDescription.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDescription.MipLODBias = 0.0f;
+		//samplerDescription.MaxAnisotropy = m_featureLevel > D3D_FEATURE_LEVEL_9_1 ? 4 : 2;
+		samplerDescription.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		samplerDescription.BorderColor[0] = 0.0f;
+		samplerDescription.BorderColor[1] = 0.0f;
+		samplerDescription.BorderColor[2] = 0.0f;
+		samplerDescription.BorderColor[3] = 0.0f;
+		samplerDescription.MinLOD = 0;      // This allows the use of all mip levels
+		samplerDescription.MaxLOD = D3D11_FLOAT32_MAX;
+		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[0]);
+		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[1]);
+		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[2]);
+		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[3]);
 
 		// create depth/stencil buffer and view
 		// set the parameter for buffer

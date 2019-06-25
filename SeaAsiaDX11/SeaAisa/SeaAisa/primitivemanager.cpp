@@ -21,6 +21,12 @@ void PrimitiveManager::StartUp()
 
 	topologyType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
+	ppLayout[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 };
+	ppLayout[1] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 };
+	ppNumElements = ARRAYSIZE(ppLayout);
+	ppVertexlayout = NULL;
+	ppVertexBuffer = NULL;
+	ppIndexBuffer = NULL;
 
 }
 
@@ -126,6 +132,7 @@ bool PrimitiveManager::InputVertexBuffer(DxDevice & dev,Unity &unity, ShaderMana
 bool PrimitiveManager::InputVertexBufferGeometryShading(DxDevice & dev, Unity &unity, ShaderManager &shaderMng)
 {
 	if (vertexlayout != NULL)	vertexlayout->Release();
+	if (shaderMng.vsBlob[0] == NULL) return false;
 	HRESULT hr = dev.device->CreateInputLayout(layout, numElements, shaderMng.vsBlob[0]->GetBufferPointer(),
 		shaderMng.vsBlob[0]->GetBufferSize(), &vertexlayout);
 
@@ -142,20 +149,74 @@ bool PrimitiveManager::InputVertexBufferGeometryShading(DxDevice & dev, Unity &u
 	return true;
 }
 
-bool PrimitiveManager::InputVertexBufferLightShading(DxDevice & dev, Unity &unity, ShaderManager &shaderMng)
-{
-	if (vertexlayout != NULL)	vertexlayout->Release();
-	HRESULT hr = dev.device->CreateInputLayout(layout, numElements, shaderMng.vsBlob[1]->GetBufferPointer(),
-		shaderMng.vsBlob[1]->GetBufferSize(), &vertexlayout);
+bool PrimitiveManager::LoadPPVertex(DxDevice &dev, ObjManager &objMng)
+{	
+	if (ppVertexBuffer != NULL) ppVertexBuffer->Release();
+
+	ScreenQuadVertex screenVertexQuad[4];
+	screenVertexQuad[0].Pos = XMFLOAT3(-1.0f, 1.0f, 0.5f);
+	screenVertexQuad[0].Tex = XMFLOAT2(0.0f, 0.0f);
+	screenVertexQuad[1].Pos = XMFLOAT3(1.0f, 1.0f, 0.5f);
+	screenVertexQuad[1].Tex = XMFLOAT2(1.0f, 0.0f);
+	screenVertexQuad[2].Pos = XMFLOAT3(-1.0f, -1.0f, 0.5f);
+	screenVertexQuad[2].Tex = XMFLOAT2(0.0f, 1.0f);
+	screenVertexQuad[3].Pos = XMFLOAT3(1.0f, -1.0f, 0.5f);
+	screenVertexQuad[3].Tex = XMFLOAT2(1.0f, 1.0f);
+
+	D3D11_BUFFER_DESC vertexBufferDescription =
+	{
+		4 * sizeof(ScreenQuadVertex),
+		D3D11_USAGE_DEFAULT,
+		D3D11_BIND_VERTEX_BUFFER,
+		0,
+		0
+	};
+
+	D3D11_SUBRESOURCE_DATA initData;
+	initData.pSysMem = screenVertexQuad;
+	initData.SysMemPitch = 0;
+	initData.SysMemSlicePitch = 0;
+
+	HRESULT hr = dev.device->CreateBuffer(&vertexBufferDescription,&initData,&ppVertexBuffer);
+
+	if (FAILED(hr))	return false;
+
+	WORD index[6];
+	index[0] = 0;
+	index[1] = 1;
+	index[2] = 2;
+	index[3] = 2;
+	index[4] = 1;
+	index[5] = 3;
+
+	vertexBufferDescription.ByteWidth = sizeof(WORD)*6;
+	vertexBufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	initData.pSysMem = index;
+	hr = dev.device->CreateBuffer(&vertexBufferDescription, &initData, &ppIndexBuffer);
+
+	if (FAILED(hr))	return false;
+
+	return true;
+}
+
+bool PrimitiveManager::InputVertexBufferLightShading(DxDevice & dev, ShaderManager &shaderMng)
+{	
+
+	if (ppVertexlayout != NULL)	ppVertexlayout->Release();
+	if (ppIndexBuffer != NULL)	ppIndexBuffer->Release();
+
+	if (shaderMng.vsBlob[1] == NULL) return false;
+	HRESULT hr = dev.device->CreateInputLayout(ppLayout, ppNumElements, shaderMng.vsBlob[1]->GetBufferPointer(),
+		shaderMng.vsBlob[1]->GetBufferSize(), &ppVertexlayout);
 
 	if (FAILED(hr)) return false;
 
-	dev.context->IASetInputLayout(vertexlayout);
+	dev.context->IASetInputLayout(ppVertexlayout);
 
-	UINT stride = sizeof(vertexData);
+	UINT stride = sizeof(ScreenQuadVertex);
 	UINT offset = 0;
-	dev.context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-	dev.context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	dev.context->IASetVertexBuffers(0, 1, &ppVertexBuffer, &stride, &offset);
+	dev.context->IASetIndexBuffer(ppIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	dev.context->IASetPrimitiveTopology(topologyType);
 
 	return true;

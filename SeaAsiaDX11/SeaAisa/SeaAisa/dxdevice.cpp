@@ -180,6 +180,10 @@ void DxDevice::CleanupRenderTarget()
 	if (rtsrv[1]) { rtsrv[1]->Release(); rtsrv[1] = NULL; }
 	if (rtsrv[2]) { rtsrv[2]->Release(); rtsrv[2] = NULL; }
 	if (rtsrv[3]) { rtsrv[3]->Release(); rtsrv[3] = NULL; }
+	if (rtSampler[0]) { rtSampler[0]->Release(); rtSampler[0] = NULL; }
+	if (rtSampler[1]) { rtSampler[1]->Release(); rtSampler[1] = NULL; }
+	if (rtSampler[2]) { rtSampler[2]->Release(); rtSampler[2] = NULL; }
+	if (rtSampler[3]) { rtSampler[3]->Release(); rtSampler[3] = NULL; }
 }
 
 void DxDevice::CreateRenderTarget()

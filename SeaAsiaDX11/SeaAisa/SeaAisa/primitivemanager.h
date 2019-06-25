@@ -20,6 +20,13 @@ public:
 
 	D3D_PRIMITIVE_TOPOLOGY topologyType;
 
+	//post process
+	D3D11_INPUT_ELEMENT_DESC ppLayout[2];
+	UINT ppNumElements;
+	ID3D11InputLayout* ppVertexlayout;
+	ID3D11Buffer* ppVertexBuffer;
+	ID3D11Buffer* ppIndexBuffer;
+
 
 	PrimitiveManager(){}
 	~PrimitiveManager(){}
@@ -31,7 +38,9 @@ public:
 
 	bool InputVertexBufferGeometryShading(DxDevice & dev, Unity & unity, ShaderManager & shaderMng);
 
-	bool InputVertexBufferLightShading(DxDevice & dev, Unity & unity, ShaderManager & shaderMng);
+	bool LoadPPVertex(DxDevice & dev, ObjManager & objMng);
+
+	bool InputVertexBufferLightShading(DxDevice & dev, ShaderManager & shaderMng);
 	
 
 };

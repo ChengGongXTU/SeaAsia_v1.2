@@ -162,31 +162,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 						cam.right = Normalize(Vector(XMVectorGetX(right), XMVectorGetY(right), XMVectorGetZ(right)));
 						
 						cam.dir = Normalize(cam.at - cam.eye);
-
-						/*
-						horizontalAngle -= 0.00001 * (ImGui::GetIO().MousePos.x - ImGui::GetIO().MousePosPrev.x);
-						XMVECTOR quaternion = XMQuaternionRotationRollPitchYaw(horizontalAngle, 0.0, 0.0);
-
-						cam.quaternion = XMQuaternionMultiply(cam.quaternion, quaternion);
-
-						XMMATRIX mRotate =  DirectX::XMMatrixRotationQuaternion(cam.quaternion);
-
-						XMVECTOR xmAt = XMVector4Transform(XMVectorSet(cam.at.x, cam.at.y, cam.at.z, 1.0), mRotate);
-
-						cam.at.x = XMVectorGetX(xmAt);
-						cam.at.z = XMVectorGetZ(xmAt);
-						cam.at.y = XMVectorGetY(xmAt);
-						*/
-						/*
-						XMMATRIX mView = XMLoadFloat4x4(&cam.mView.m);
-						XMMATRIX m = DirectX::XMMatrixRotationRollPitchYaw(horizontalAngle, 0.0, 0.0);
-						mView *= m;
-						Vector dir = cam.at - cam.eye;
-						XMVECTOR v = XMVectorSet(dir.x, dir.y, dir.z, 0.0);
-						XMVECTOR at = XMVector3TransformNormal(v, mView);
-
-						cam.at = Point(XMVectorGetX(at), XMVectorGetY(at), XMVectorGetZ(at));
-						*/
 					}
 					
 					cam.mView = LookAt(cam.eye, cam.at, cam.up).m;
@@ -202,7 +177,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[1], (float*)&clear_col);
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[2], (float*)&clear_col);
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[3], (float*)&clear_col);
-		lowlevelrendermanager.RenderScene(basicManager,winDevice, RenderSceneId);
+		lowlevelrendermanager.DeferredRenderScene(basicManager,winDevice, RenderSceneId);
 		ImGui::Render();
 		basicManager.dxDevice.swapChain->Present(0, 0);
 	}

@@ -20,6 +20,7 @@ public:
 	ID3D11Texture2D* rtt[4];
 	ID3D11RenderTargetView* rtv[4];
 	ID3D11ShaderResourceView* rtsrv[4];
+	ID3D11SamplerState* rtSampler[4];
 	ID3D11DepthStencilView* dsv;
 
 	D3D11_VIEWPORT vp;
@@ -50,6 +51,7 @@ public:
 		rtt[0] = rtt[1] = rtt[2] = rtt[3] = NULL;
 		rtv[0] = rtv[1] = rtv[2] = rtv[3] = NULL;
 		rtsrv[0] = rtsrv[1] = rtsrv[2] = rtsrv[3] = NULL;
+		rtSampler[0] = rtSampler[1] = rtSampler[2] = rtSampler[3] = NULL;
 		dsv = NULL;
 
 		//effect = NULL;
