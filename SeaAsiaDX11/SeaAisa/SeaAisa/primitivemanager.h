@@ -28,6 +28,10 @@ public:
 	void ShutUp();
 	bool LoadUnity(DxDevice &dev,ObjManager &objMng,Unity &unity);
 	bool InputVertexBuffer(DxDevice &dev, Unity &unity,ShaderManager &shaderMng);
+
+	bool InputVertexBufferGeometryShading(DxDevice & dev, Unity & unity, ShaderManager & shaderMng);
+
+	bool InputVertexBufferLightShading(DxDevice & dev, Unity & unity, ShaderManager & shaderMng);
 	
 
 };

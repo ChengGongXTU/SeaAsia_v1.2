@@ -102,6 +102,82 @@ bool LowLevelRendermanager::DrawSceneUnity(BasicManager & basicMng, int SceneId,
 	return true;
 }
 
+bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity & unity)
+{
+	//vertex
+	if (!primitiveManager.LoadUnity(basicMng.dxDevice, basicMng.objManager, unity))	return false;
+
+	if (!primitiveManager.InputVertexBufferGeometryShading(basicMng.dxDevice, unity, shaderManager))	return false;
+
+	//camera
+	XMMATRIX m = XMLoadFloat4x4(&unity.wolrdTransform.m.m);
+	m = XMMatrixTranspose(m);
+	basicMng.dxDevice.context->UpdateSubresource(cameraManager.worldjTransformBuffer, 0, NULL, &m, 0, 0);
+	basicMng.dxDevice.context->VSSetConstantBuffers(0, 1, &cameraManager.worldjTransformBuffer);
+
+	if (unity.textureId != -1)
+	{
+		basicMng.dxDevice.context->PSSetShaderResources(0, 1, &basicMng.textureManager.texViewPointer[unity.textureId]);
+		basicMng.dxDevice.context->PSSetSamplers(0, 1, &basicMng.textureManager.sampleStatePointer[unity.samplerStateId]);
+	}
+
+	ID3D11Buffer* materialConstant = NULL;
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(MaterialParameter);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+	HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&bd, NULL, &materialConstant);
+	if (FAILED(hr))	return false;
+
+	for (int i = 0; i < unity.materialNum; i++) {
+
+		// update material
+		basicMng.dxDevice.context->UpdateSubresource(materialConstant, 0, 0,
+			&basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].parameter, 0, 0);
+
+		//input material to constant buffer slot 4th
+		basicMng.dxDevice.context->PSSetConstantBuffers(4, 1, &materialConstant);
+
+		//draw mesh which belong to this material
+		basicMng.dxDevice.context->DrawIndexed(basicMng.objManager.DxObjMem[unity.objId]->FaceNumInEachMtl[i] * 3,
+			basicMng.objManager.DxObjMem[unity.objId]->beginFaceInEachMtl[i]*3, 0);
+		//basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
+	}
+	if (materialConstant != NULL) materialConstant->Release();
+	return true;
+
+}
+
+bool LowLevelRendermanager::DeferredDrawSceneGeometry(BasicManager & basicMng, int SceneId, int cameraId, int dlightId)
+{
+	int unityNum = basicMng.sceneManager.sceneList[SceneId].endUnityId;
+	DxScene& scene = basicMng.sceneManager.sceneList[SceneId];
+
+	if (unityNum <= 0)	return false;
+
+	for (int i = 0; i < unityNum; i++)
+	{
+		if (scene.unityList[i].objId == -1)	continue;
+
+		if (!DeferredDrawGeometry(basicMng, scene.unityList[i])) return false;
+
+	}
+
+	return true;
+}
+
+bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, int SceneId, int cameraId, int dlightId)
+{
+	int unityNum = basicMng.sceneManager.sceneList[SceneId].endUnityId;
+	DxScene& scene = basicMng.sceneManager.sceneList[SceneId];
+
+	
+
+	return true;
+}
+
 void LowLevelRendermanager::RenderScene(BasicManager & basicMng, WindowsDevice &wnDev,int SceneId)
 {	
 	DxScene& scene = basicMng.sceneManager.sceneList[SceneId];
@@ -148,12 +224,27 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	//compute G-buffer
- 	//------set 3 rtv-----------
+//------------------------compute G-buffer---------------------------------------------------------------------------
+ 	//------set 3 G-buffer rtv-----------
 	basicMng.dxDevice.context->OMSetRenderTargets(3, &basicMng.dxDevice.rtv[1], NULL);
 	//------bind vs and ps -----------
 	shaderManager.InputVertexShader(basicMng.dxDevice, 0);
 	shaderManager.InputPixelShader(basicMng.dxDevice, 0);
+	//-----input camera matrix constant-------
+	if (cameraManager.viewTransformBuffer != NULL)
+	{
+		cameraManager.LoadCamera(basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
+		cameraManager.InputCamera(basicMng.dxDevice);
+	}
+	//------------draw Geometry buffer------------ 
+	DeferredDrawSceneGeometry(basicMng, SceneId, 0, scene.currentDlId);
+
+//------------------------light shading---------------------------------------------------------------------------
+	//------set first rtv-----------
+	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], basicMng.dxDevice.dsv);
+
+	shaderManager.InputVertexShader(basicMng.dxDevice, 1);
+	shaderManager.InputPixelShader(basicMng.dxDevice, 1);
 	//-----input camera matrix constant-------
 	if (cameraManager.viewTransformBuffer != NULL)
 	{
@@ -165,27 +256,7 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 	{
 		lightManager.SetDirLight(basicMng.dxDevice, scene.dlList[scene.currentDlId]);
 	}
-	//draw 
-	DrawSceneUnity(basicMng, SceneId, 0, scene.currentDlId);
-
-	//light shading
-	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], basicMng.dxDevice.dsv);
-	shaderManager.InputVertexShader(basicMng.dxDevice, 1);
-	shaderManager.InputPixelShader(basicMng.dxDevice, 1);
-
-
-
-	if (cameraManager.viewTransformBuffer != NULL)
-	{
-		cameraManager.LoadCamera(basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
-		cameraManager.InputCamera(basicMng.dxDevice);
-	}
-
-	if (lightManager.DirLightBuffer != NULL)
-	{
-		lightManager.SetDirLight(basicMng.dxDevice, scene.dlList[scene.currentDlId]);
-		DrawSceneUnity(basicMng, SceneId, 0, scene.currentDlId);
-	}
+	DeferredDrawSceneLighting(basicMng, SceneId, 0, scene.currentDlId);
 
 }
 

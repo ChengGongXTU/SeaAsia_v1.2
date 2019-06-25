@@ -28,6 +28,9 @@ public:
 	bool SetScene(DxDevice &dev,DxScene &scene);
 	bool DrawUnity(BasicManager &basicMng, Unity &unity);
 	bool DrawSceneUnity(BasicManager & basicMng, int SceneId, int cameraId, int dlightId);
+	bool DeferredDrawGeometry(BasicManager & basicMng, Unity & unity);
+	bool DeferredDrawSceneGeometry(BasicManager & basicMng, int SceneId, int cameraId, int dlightId);
+	bool DeferredDrawSceneLighting(BasicManager & basicMng, int SceneId, int cameraId, int dlightId);
 	void RenderScene(BasicManager &basicMng, WindowsDevice &wnDev, int SceneId);
 	void SetViewPort(BasicManager &basicMng, float x, float y, float w, float h, float mind, float maxd);
 	void ResizeRenderpipeline(BasicManager &basicMng,WindowsDevice &wnDev);

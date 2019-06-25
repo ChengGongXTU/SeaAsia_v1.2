@@ -122,3 +122,41 @@ bool PrimitiveManager::InputVertexBuffer(DxDevice & dev,Unity &unity, ShaderMana
 	
 	return true;
 }
+
+bool PrimitiveManager::InputVertexBufferGeometryShading(DxDevice & dev, Unity &unity, ShaderManager &shaderMng)
+{
+	if (vertexlayout != NULL)	vertexlayout->Release();
+	HRESULT hr = dev.device->CreateInputLayout(layout, numElements, shaderMng.vsBlob[0]->GetBufferPointer(),
+		shaderMng.vsBlob[0]->GetBufferSize(), &vertexlayout);
+
+	if (FAILED(hr)) return false;
+
+	dev.context->IASetInputLayout(vertexlayout);
+
+	UINT stride = sizeof(vertexData);
+	UINT offset = 0;
+	dev.context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	dev.context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	dev.context->IASetPrimitiveTopology(topologyType);
+
+	return true;
+}
+
+bool PrimitiveManager::InputVertexBufferLightShading(DxDevice & dev, Unity &unity, ShaderManager &shaderMng)
+{
+	if (vertexlayout != NULL)	vertexlayout->Release();
+	HRESULT hr = dev.device->CreateInputLayout(layout, numElements, shaderMng.vsBlob[1]->GetBufferPointer(),
+		shaderMng.vsBlob[1]->GetBufferSize(), &vertexlayout);
+
+	if (FAILED(hr)) return false;
+
+	dev.context->IASetInputLayout(vertexlayout);
+
+	UINT stride = sizeof(vertexData);
+	UINT offset = 0;
+	dev.context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	dev.context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	dev.context->IASetPrimitiveTopology(topologyType);
+
+	return true;
+}
