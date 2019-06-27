@@ -80,3 +80,30 @@ PS_INPUT VS(VS_INPUT v)
 
 	return o;
 }
+
+PSOutput PS(PS_INPUT i)
+{
+	PSOutput output = (PSOutput)0;
+
+	//rt0
+	output.RT0.xyz = float3(i.t2w0.w, i.t2w1.w, i.t2w2.w);
+	float4 mra = MRA.Sample(SamLinear,i.uv);
+	output.RT0..w = mra.x;
+
+	//rt1
+	float4 tNormal = 2 * NormalMap.Sample(SamLinear, i.uv) - 1;
+	float4 wNormal = float4(0, 0, 0, 1);
+	wNormal.x = dot(i.t2w0.xyz, tNormal.xyz);
+	wNormal.y = dot(i.t2w1.xyz, tNormal.xyz);
+	wNormal.z = dot(i.t2w2.xyz, tNormal.xyz);
+	output.RT1.xyz = wNormal.xyz;
+	output.RT1.w = mra.y;
+
+	//rt2
+	float4 albedo = Albedo.Sample(SamLinear, i.uv);
+	output.RT2.xyz = albedo.xyz;
+	output.RT2.w = mra.z;
+
+	return output;
+
+}
