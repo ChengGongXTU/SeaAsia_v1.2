@@ -47,8 +47,8 @@ void PrimitiveManager::ShutUp()
 
 bool PrimitiveManager::LoadUnity(DxDevice &dev,ObjManager &objMng,Unity & unity)
 {	
-	if (vertexBuffer != NULL) vertexBuffer->Release();
-	if (indexBuffer != NULL) indexBuffer->Release();
+	if (vertexBuffer != NULL && vertexBuffer != nullptr) vertexBuffer->Release(), vertexBuffer = NULL;
+	if (indexBuffer != NULL && indexBuffer != nullptr) indexBuffer->Release(), indexBuffer = NULL;
 
 	if (objId == -1) {
 
@@ -75,12 +75,8 @@ bool PrimitiveManager::LoadUnity(DxDevice &dev,ObjManager &objMng,Unity & unity)
 		return true;
 
 	}
-
-	if (objId == unity.objId) {
-		return true;
-	}
-
-	if (objId != unity.objId && objId != -1) {
+	else if(objId >= 0 && objId <objMng.endObjId) 
+	{
 		
 		ZeroMemory(&bd, sizeof(bd));
 		ZeroMemory(&data, sizeof(data));
@@ -151,7 +147,8 @@ bool PrimitiveManager::InputVertexBufferGeometryShading(DxDevice & dev, Unity &u
 
 bool PrimitiveManager::LoadPPVertex(DxDevice &dev, ObjManager &objMng)
 {	
-	if (ppVertexBuffer != NULL) ppVertexBuffer->Release();
+	if (ppVertexBuffer != NULL && ppVertexBuffer != nullptr) ppVertexBuffer->Release(),ppVertexBuffer = NULL;
+	if (ppIndexBuffer != NULL && ppIndexBuffer != nullptr) ppIndexBuffer->Release(), ppIndexBuffer = NULL;
 
 	ScreenQuadVertex screenVertexQuad[4];
 	screenVertexQuad[0].Pos = XMFLOAT3(-1.0f, 1.0f, 0.5f);
@@ -202,8 +199,7 @@ bool PrimitiveManager::LoadPPVertex(DxDevice &dev, ObjManager &objMng)
 bool PrimitiveManager::InputVertexBufferLightShading(DxDevice & dev, ShaderManager &shaderMng)
 {	
 
-	if (ppVertexlayout != NULL)	ppVertexlayout->Release();
-	if (ppIndexBuffer != NULL)	ppIndexBuffer->Release();
+	if (ppVertexlayout != NULL && ppVertexlayout != nullptr)	ppVertexlayout->Release(), ppVertexlayout =NULL;
 
 	if (shaderMng.vsBlob[1] == NULL) return false;
 	HRESULT hr = dev.device->CreateInputLayout(ppLayout, ppNumElements, shaderMng.vsBlob[1]->GetBufferPointer(),

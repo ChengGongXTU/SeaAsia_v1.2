@@ -117,13 +117,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\SeaAisa\FBXSDK\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\SeaAisa\FreeImage;D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\SeaAisa\FBXSDK\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;libfbxsdk.lib;libxml2-md.lib;zlib-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\um;D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\SeaAisa\FBXSDK\lib\vs2017\x64\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;libfbxsdk.lib;libxml2-md.lib;zlib-md.lib;FreeImage.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\SeaAisa\FreeImage;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\um;D:\WorkSoftware\GitHub\SeaAsia_v1.2\SeaAsiaDX11\SeaAisa\SeaAisa\FBXSDK\lib\vs2017\x64\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -305,6 +305,18 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Texture.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shader\PBRGeometryPass.fx">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shader\PBRLightShading.fx">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

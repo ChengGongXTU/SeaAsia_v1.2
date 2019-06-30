@@ -9,6 +9,8 @@ public:
 	ID3D11ShaderResourceView** texViewPointer;
 	D3D11_SAMPLER_DESC* sampDesc;
 	ID3D11SamplerState** sampleStatePointer;
+	uint32_t** textures;
+	ID3D11Texture2D** dxTexure2D;
 
 	int totalTexureNumber;
 	int endTextureId;
@@ -33,6 +35,7 @@ public:
 	void ShutUp();
 
 	bool DxLoadTexture(wstring fileName, DxDevice &dxDev);
+	bool DxLoadImage(const char* fileName, DxDevice &dxDev);
 	bool DxSetSamplerDesc(D3D11_FILTER filterType,
 		D3D11_TEXTURE_ADDRESS_MODE adddU,
 		D3D11_TEXTURE_ADDRESS_MODE adddV,

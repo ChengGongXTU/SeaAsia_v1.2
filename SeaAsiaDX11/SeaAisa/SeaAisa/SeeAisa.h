@@ -38,7 +38,6 @@
 //system support
 //#include"rand.h"
 
-
 //imgui
 #include "imgui.h"
 #include "imgui_impl_dx11.h"
@@ -46,6 +45,9 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <tchar.h>
+
+//
+#include"FreeImage.h"
 
 //Macros
 #define M_PI 3.1415926

@@ -410,6 +410,8 @@
     <None Include="DirectXTex\Shaders\Compiled\BC7Encode_TryMode456CS.pdb">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="Shader\PBRGeometryPass.fx" />
+    <None Include="Shader\PBRLightShading.fx" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Texture.dds" />

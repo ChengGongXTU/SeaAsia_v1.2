@@ -116,49 +116,6 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 		ImGui::EndMainMenuBar();
 	}
 
-	if (renderMng.cameraManager.viewTransformBuffer != NULL)
-	{
-		DxCamera &camera = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].cameraList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].currentCameraId];
-		RECT rect;
-		GetClientRect(winDev.hwnd, &rect);
-		float rw = (float)(rect.right - rect.left);
-		float rh = (float)(rect.bottom - rect.top);
-		ImGui::SetNextWindowPos(ImVec2(rw*0.7, 20));
-		ImGui::SetNextWindowSize(ImVec2(rw*0.1, rh*0.15));
-		if (!ImGui::Begin(""))
-		{
-			ImGui::End();
-			return;
-		}
-
-		if (ImGui::Button("front"))
-		{
-			//XMFLOAT3  eyeVec = XMFLOAT3(XMVectorGetX(camera.at) - XMVectorGetX(camera.eye),
-			//	XMVectorGetY(camera.at) - XMVectorGetY(camera.eye),
-			//	XMVectorGetZ(camera.at) - XMVectorGetZ(camera.eye));
-
-			//camera.eye = XMVectorSet(XMVectorGetX(camera.eye) + eyeVec.x,
-			//	XMVectorGetY(camera.eye) + eyeVec.y,
-			//	XMVectorGetZ(camera.eye) + eyeVec.z,1.f);
-			//camera.mView = XMMatrixLookAtLH(camera.eye, camera.at, camera.up);
-		}
-
-		if (ImGui::Button("front"))
-		{
-			//XMFLOAT3  eyeVec = XMFLOAT3(XMVectorGetX(camera.at) - XMVectorGetX(camera.eye),
-			//	XMVectorGetY(camera.at) - XMVectorGetY(camera.eye),
-			//	XMVectorGetZ(camera.at) - XMVectorGetZ(camera.eye));
-
-			//camera.eye = XMVectorSet(XMVectorGetX(camera.eye) + eyeVec.x,
-			//	XMVectorGetY(camera.eye) + eyeVec.y,
-			//	XMVectorGetZ(camera.eye) + eyeVec.z, 1.f);
-			//camera.mView = XMMatrixLookAtLH(camera.eye, camera.at, camera.up);
-		}
-
-
-		ImGui::End();
-	}
-
 }
 
 static void ScenenResourceView(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, bool *p_open)
@@ -860,12 +817,12 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 	float h = (float)(rect.bottom - rect.top);
 
 	static wchar_t vsShaderNameWchar[129] = L"";
-	static char vsShaderNameChar[128] = "hlsl.fx";
+	static char vsShaderNameChar[128] = "Shader/PBRGeometryPass.fx"; // "hlsl.fx";
 	static char vsName[128] = "VS";
 	static char vsVersion[128] = "vs_4_0";
 
 	static wchar_t psShaderNameWchar[129] = L"";
-	static char psShaderNameChar[128] = "hlsl.fx";
+	static char psShaderNameChar[128] = "Shader/PBRLightShading.fx"; // "hlsl.fx";
 	static char psName[128] = "PS";
 	static char psVersion[128] = "ps_4_0";
 
@@ -889,14 +846,14 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 		ImGui::InputText("Vertex Shader main program name:", vsName, 128);
 		ImGui::InputText("Vertex Shader version:", vsVersion, 128);
 
-		if (ImGui::BeginPopupModal("VS Error"))
+		if (ImGui::BeginPopupModal("VS Error1"))
 		{
 			ImGui::Text("can't load VS shader");
 			if (ImGui::Button("close"))	ImGui::CloseCurrentPopup();
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::BeginPopupModal("PS Error"))
+		if (ImGui::BeginPopupModal("PS Error1"))
 		{
 			ImGui::Text("can't load PS shader");
 			if (ImGui::Button("close"))	ImGui::CloseCurrentPopup();
@@ -907,7 +864,11 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 		{
 			if (!renderMng.shaderManager.LoadAndCreateVertexShader(vsShaderNameWchar, vsName, vsVersion, basicMng.dxDevice))
 			{
-				ImGui::OpenPopup("VS Error");
+				ImGui::OpenPopup("VS Error1");
+			}
+			else if (!renderMng.shaderManager.LoadAndCreatePixelShader(vsShaderNameWchar, psName, psVersion, basicMng.dxDevice))
+			{
+				ImGui::OpenPopup("PS Error1");
 			}
 		}
 
@@ -917,11 +878,29 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 		ImGui::InputText("Pixel Shader main program name:", psName, 128);
 		ImGui::InputText("Pixel Shader version:", psVersion, 128);
 
+		if (ImGui::BeginPopupModal("VS Error2"))
+		{
+			ImGui::Text("can't load VS shader");
+			if (ImGui::Button("close"))	ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::BeginPopupModal("PS Error2"))
+		{
+			ImGui::Text("can't load PS shader");
+			if (ImGui::Button("close"))	ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+		}
+
 		if (ImGui::Button("Pixel Create shader", ImVec2(200, 20)))
 		{
-			if (!renderMng.shaderManager.LoadAndCreatePixelShader(psShaderNameWchar, psName, psVersion, basicMng.dxDevice))
+			if (!renderMng.shaderManager.LoadAndCreateVertexShader(psShaderNameWchar, vsName, vsVersion, basicMng.dxDevice))
 			{
-				ImGui::OpenPopup("PS Error");
+				ImGui::OpenPopup("VS Error2");
+			}
+			else if (!renderMng.shaderManager.LoadAndCreatePixelShader(psShaderNameWchar, psName, psVersion, basicMng.dxDevice))
+			{
+				ImGui::OpenPopup("PS Error2");
 			}
 		}
 	}

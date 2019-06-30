@@ -112,6 +112,7 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	//camera
 	XMMATRIX m = XMLoadFloat4x4(&unity.wolrdTransform.m.m);
 	m = XMMatrixTranspose(m);
+	if (cameraManager.worldjTransformBuffer == NULL) cameraManager.CreateWorldBuffer(basicMng.dxDevice);
 	basicMng.dxDevice.context->UpdateSubresource(cameraManager.worldjTransformBuffer, 0, NULL, &m, 0, 0);
 	basicMng.dxDevice.context->VSSetConstantBuffers(0, 1, &cameraManager.worldjTransformBuffer);
 
@@ -200,8 +201,8 @@ void LowLevelRendermanager::RenderScene(BasicManager & basicMng, WindowsDevice &
 	float black[4] = { 0.0f,0.0f,0.0f,1.0f };
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], color);
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[3], black);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH| D3D11_CLEAR_STENCIL, 1.0f,0);
 	
 	shaderManager.InputVertexShader(basicMng.dxDevice, 0);
@@ -230,10 +231,13 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 
 	float color[4] = { 0.5f,0.5f,0.5f,1.0f };
 	float black[4] = { 0.0f,0.0f,0.0f,1.0f };
+	float red[4] = { 1.0f,0.0f,0.0f,1.0f };
+	float green[4] = { 0.0f,1.0f,0.0f,1.0f };
+	float blue[4] = { 0.0f,0.0f,1.0f,1.0f };
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], color);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], red);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], green);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[3], blue);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 //------------------------compute G-buffer---------------------------------------------------------------------------
@@ -958,6 +962,13 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 
 		//load tangent
 		FbxGeometryElementTangent* pFbxTangents = pMesh->GetElementTangent(0);
+		if (!pFbxTangents)
+		{
+			if (pMesh->GenerateTangentsData(0))
+			{	
+				pFbxTangents = pMesh->GetElementTangent(0);
+			}
+		}
 		if (pFbxTangents)
 		{
 			switch (pFbxTangents->GetMappingMode())
