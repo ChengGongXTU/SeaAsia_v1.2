@@ -6,11 +6,16 @@
 class TextureManager {
 
 public:
+	D3D11_TEXTURE2D_DESC texDesc;
+	D3D11_SUBRESOURCE_DATA sd;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+
 	ID3D11ShaderResourceView** texViewPointer;
 	D3D11_SAMPLER_DESC* sampDesc;
 	ID3D11SamplerState** sampleStatePointer;
 	uint32_t** textures;
 	ID3D11Texture2D** dxTexure2D;
+	const char** texNames;
 
 	int totalTexureNumber;
 	int endTextureId;
@@ -44,5 +49,6 @@ public:
 		FLOAT minLod, FLOAT maxLod,
 		UINT maxAni,
 		FLOAT mipLodBias);
+	bool LoadDefeatImage(DxDevice & dxDev);
 	bool DxSetSamplerState(int &samplerDescId, DxDevice &dxDevice);
 };

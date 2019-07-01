@@ -191,11 +191,11 @@ void RayTriangleMesh::Creatmaterial(RayMaterial** ptr, DxMaterials& dxmtl)
 		*ptr = NULL;
 	}
 
-	if (dxmtl.mtlType == matte)
+	if (true)
 		*ptr = new Matte[1];
-	if (dxmtl.mtlType == phong)
+	if (true)
 		*ptr = new Phong[1];
-	if (dxmtl.mtlType == emissive)
+	if (true)
 		*ptr = new Emissive[1];
 }
 
@@ -353,11 +353,11 @@ void RaySphere::Creatmaterial(RayMaterial** ptr, DxMaterials & mtl)
 			*ptr = NULL;
 		}
 
-		if (mtl.mtlType == matte)
+		if (true)
 			*ptr = new Matte[1];
-		if (mtl.mtlType == phong)
+		if (true)
 			*ptr = new Phong[1];
-		if (mtl.mtlType == emissive)
+		if (true)
 			*ptr = new Emissive[1];
 }
 
@@ -369,11 +369,11 @@ void RayRectangle::Creatmaterial(RayMaterial** ptr, DxMaterials & dxmtl)
 		*ptr = NULL;
 	}
 
-	if (dxmtl.mtlType == matte)
+	if (true)
 		*ptr = new Matte[1];
-	if (dxmtl.mtlType == phong)
+	if (true)
 		*ptr = new Phong[1];
-	if (dxmtl.mtlType == emissive)
+	if (true)
 		*ptr = new Emissive[1];
 }
 

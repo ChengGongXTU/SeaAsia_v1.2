@@ -7,16 +7,27 @@ void MaterialsManager::CreateDxMemory(int mtlNum)
 	dxMaterial = new DxMaterials[mtlNum];
 	for (int i = 0; i < mtlNum; i++)
 	{
-		dxMaterial[i].mtlType = matte;
-		dxMaterial[i].parameter.Ka = XMFLOAT4(0, 0, 0, 1);
-		dxMaterial[i].parameter.Kd = XMFLOAT4(0, 0, 0, 1);
-		dxMaterial[i].parameter.Ks = XMFLOAT4(0, 0, 0, 1);
-		dxMaterial[i].parameter.Ke = XMFLOAT4(0, 0, 0, 1);
-		dxMaterial[i].parameter.alpha = 1.f;
-		dxMaterial[i].parameter.illum = 0.f;
-		dxMaterial[i].parameter.Ni = 0.f;
-		dxMaterial[i].parameter.Ns = 0;
 		dxMaterial[i].empty = true;
+
+		dxMaterial[i].parameter._ColorFactor = XMFLOAT4(1.f, 1.f, 1.f, 1.f);
+		dxMaterial[i].parameter._MetallicFactor = 1.f;
+		dxMaterial[i].parameter._RoughnessFactor = 1.f;
+		dxMaterial[i].parameter._IBLFactor = 1.f;
+		dxMaterial[i].parameter._AmbientClor = XMFLOAT4(0.f, 0.f, 0.f, 1.f);
+		dxMaterial[i].type = Opaque;
+
+		dxMaterial[i].albedoSRV = NULL;
+		dxMaterial[i].albedoSampleState = NULL;
+		dxMaterial[i].albedoID = -1;
+
+		dxMaterial[i].normalSRV = NULL;
+		dxMaterial[i].normalSampleState = NULL;
+		dxMaterial[i].normalID = -1;
+
+		dxMaterial[i].mraSRV = NULL;
+		dxMaterial[i].mraSampleState = NULL;
+		dxMaterial[i].mraID = -1;
+
 	}
 }
 
@@ -32,8 +43,10 @@ void MaterialsManager::ShutUp()
 	currentMtlId = 0;
 }
 
+
 void MaterialsManager::LoadMtlFile(wstring fileName)
-{
+{	
+	/*
 	ifstream fl(fileName);
 	string line ;
 	stringstream ss ;
@@ -115,5 +128,5 @@ void MaterialsManager::LoadMtlFile(wstring fileName)
 		}
 
 	}
-
+	*/
 }

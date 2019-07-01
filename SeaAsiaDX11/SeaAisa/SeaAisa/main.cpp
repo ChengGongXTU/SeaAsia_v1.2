@@ -36,6 +36,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 		MessageBox(NULL, L"DxDevice can't be created!", L"ERROR", MB_OK);
 		return 0;
 	}
+
+	basicManager.textureManager.LoadDefeatImage(basicManager.dxDevice);
+
 	g_pSwapChain = basicManager.dxDevice.swapChain;
 	g_pd3dDevice = basicManager.dxDevice.device;
 	g_pd3dDeviceContext = basicManager.dxDevice.context;

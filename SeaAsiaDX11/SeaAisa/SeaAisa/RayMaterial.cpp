@@ -2,7 +2,7 @@
 
 void Matte::LoadMaterial(DxMaterials & mtl)
 {
-	diffuse_brdf->Kd = ColorRGB(mtl.parameter.Kd.x, mtl.parameter.Kd.y, mtl.parameter.Kd.z);
+	diffuse_brdf->Kd = ColorRGB(mtl.parameter._ColorFactor.x, mtl.parameter._ColorFactor.y, mtl.parameter._ColorFactor.z)  * (1 - mtl.parameter._MetallicFactor);
 	diffuse_brdf->SetSampler(new Jittere(4), 1);
 }
 
@@ -50,8 +50,8 @@ ColorRGB Matte::AreaLightShader(Info & info)
 
 void Phong::LoadMaterial(DxMaterials & mtl)
 {
-	diffuse_brdf->Kd = ColorRGB(mtl.parameter.Kd.x, mtl.parameter.Kd.y, mtl.parameter.Kd.z);
-	specular_brdf->Ks = ColorRGB(mtl.parameter.Ks.x, mtl.parameter.Ks.y, mtl.parameter.Ks.z);
+	diffuse_brdf->Kd = ColorRGB(mtl.parameter._ColorFactor.x, mtl.parameter._ColorFactor.y, mtl.parameter._ColorFactor.z) * (1 - mtl.parameter._MetallicFactor);
+	specular_brdf->Ks = diffuse_brdf->Kd * mtl.parameter._MetallicFactor;// ColorRGB(mtl.parameter.Ks.x, mtl.parameter.Ks.y, mtl.parameter.Ks.z);
 	diffuse_brdf->SetSampler(new Jittere(4), 1);
 	specular_brdf->SetSampler(new Jittere(4), 256);
 	
@@ -101,7 +101,7 @@ ColorRGB Phong::AreaLightShader(Info & info)
 
 void Emissive::LoadMaterial(DxMaterials & mtl)
 {
-	Ke = ColorRGB(mtl.parameter.Ke.x, mtl.parameter.Ke.y, mtl.parameter.Ke.z);
+	Ke = ColorRGB(1, 1, 1);
 	
 }
 

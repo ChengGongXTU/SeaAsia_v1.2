@@ -11,6 +11,7 @@ static bool show_render_setting_view = true;
 static bool show_camera_change_view = false;
 static bool show_materila_change_view = false;
 static bool Show_Example_App_Property_Editor = true;
+static bool Show_Texture_Resource = true;
 
 void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& rayMng, bool *p_open)
 {
@@ -18,6 +19,7 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 	if (show_scene_resource_view)	ScenenResourceView(winDev, basicMng, renderMng, &show_scene_resource_view);
 	//if (show_resource_list_view)	ResourceListView(winDev, basicMng, &show_resource_list_view);
 	if (show_render_setting_view) RenderSettingView(winDev, basicMng, renderMng, &show_render_setting_view);
+	if (Show_Texture_Resource) ShowTextureResource(&Show_Texture_Resource, basicMng);
 	if (Show_Example_App_Property_Editor) ShowExampleAppPropertyEditor(&Show_Example_App_Property_Editor, basicMng);
 
 
@@ -1039,7 +1041,8 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 }
 
 static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& renderMng, bool *p_open)
-{
+{	
+	/*
 	Unity& unity = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].unityList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].currentUnityId];
 	MaterialParameter &currentPara = basicMng.materialsManager.dxMaterial[basicMng.materialsManager.currentMtlId].parameter;
 
@@ -1076,7 +1079,7 @@ static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& re
 	ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing())); // Leave room for 1 line below us
 	ImGui::Text("material: %d", basicMng.materialsManager.currentMtlId);
 	ImGui::Separator();
-
+	
 	ImGui::Text("Current Materila Ka: %f %f %f", currentPara.Ka.x, currentPara.Ka.y, currentPara.Ka.z);
 	ImGui::InputFloat3("Ka:", ka);
 	ImGui::Text("Current Materila Kd: %f %f %f", currentPara.Kd.x, currentPara.Kd.y, currentPara.Kd.z);
@@ -1085,7 +1088,7 @@ static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& re
 	ImGui::InputFloat3("Ks:", ks);
 	ImGui::Text("Current Materila Ke: %f %f %f", currentPara.Ke.x, currentPara.Ke.y, currentPara.Ke.z);
 	ImGui::InputFloat3("Ke:", ke);
-
+	
 	ImGui::Text("Current Materila alpha: %f", currentPara.alpha);
 	if (alpha < 0.f)	alpha = 0.f;
 	ImGui::InputFloat("alpha:", &alpha);
@@ -1105,7 +1108,7 @@ static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& re
 
 	static int mtlType = 0;
 	ImGui::Combo("Object type", &mtlType, "matte\0phong\0emissive\0\0");
-
+	
 	ImGui::BeginChild("buttons");
 
 	if (ImGui::Button("Set Defeat"))
@@ -1141,6 +1144,7 @@ static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& re
 	ImGui::EndGroup();
 
 	ImGui::End();
+	*/
 }
 
 static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng)
@@ -1202,5 +1206,32 @@ static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng)
 	ImGui::Columns(1);
 	ImGui::Separator();
 	ImGui::PopStyleVar();
+	ImGui::End();
+}
+
+static void ShowTextureResource(bool* p_open, BasicManager &basicMng)
+{
+	ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(800, 300), ImGuiSetCond_FirstUseEver);
+
+	// Main body of the Demo window starts here.
+	if (!ImGui::Begin("Show Texture Resource", p_open))
+	{
+		// Early out if the window is collapsed, as an optimization.
+		ImGui::End();
+		return;
+	}
+
+	for (int i = 0; i < basicMng.textureManager.endTextureId; i++)
+	{	
+		if (basicMng.textureManager.dxTexure2D != NULL)
+		{
+			ImGui::PushID(i);
+			int frame_padding = -1 + i;     // -1 = uses default padding
+			ImGui::Button(basicMng.textureManager.texNames[i], ImVec2(100, 20));
+			ImGui::PopID();
+		}
+		ImGui::SameLine();
+	}
 	ImGui::End();
 }

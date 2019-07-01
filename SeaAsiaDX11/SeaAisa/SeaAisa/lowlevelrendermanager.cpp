@@ -489,7 +489,7 @@ void LowLevelRendermanager::ReverseUnityNormalZaxis(BasicManager & basicMng, Uni
 }
 
 void LowLevelRendermanager::RenderMaterialChange(BasicManager & basicMng, int materialID, MaterialParameter & para,int type)
-{	
+{	/*
 	MaterialParameter& currentPara = basicMng.materialsManager.dxMaterial[materialID].parameter;
 	currentPara.Ka = para.Ka;
 	currentPara.Kd = para.Kd;
@@ -503,12 +503,13 @@ void LowLevelRendermanager::RenderMaterialChange(BasicManager & basicMng, int ma
 	if (type == 0)	basicMng.materialsManager.dxMaterial[materialID].mtlType == matte;
 	if (type == 1)	basicMng.materialsManager.dxMaterial[materialID].mtlType == phong;
 	if (type == 2)	basicMng.materialsManager.dxMaterial[materialID].mtlType == emissive;
+	*/
 }
 
 
 bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlName, wstring textureName, DxScene &scene,
 	BasicManager &basicMng, ObjectType type)
-{
+{	/*
 	//load mesh 
 	if (!basicMng.objManager.LoadTriangelMeshObj(objName)) return false;
 	scene.unityList[scene.endUnityId].objId = basicMng.objManager.endObjId - 1;
@@ -583,7 +584,8 @@ bool LowLevelRendermanager::LoadUnityFromObjFile(wstring objName, wstring mtlNam
 
 	scene.currentUnityId = scene.endUnityId;
 	scene.endUnityId++;
-	
+	*/
+	return true;
 }
 
 bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & scene, BasicManager & basicMng)
@@ -1503,6 +1505,21 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 					}
 				}
 			}
+		}
+
+		//set texture defeat
+		for (int matCount = 0; matCount < unity->materialNum; matCount++)
+		{
+			DxMaterials &mat =  basicMng.materialsManager.dxMaterial[unity->MaterialsIdIndex[matCount]];
+			mat.albedoID = 0;
+			mat.albedoSRV = &basicMng.textureManager.texViewPointer[0];
+			mat.albedoSampleState = &basicMng.textureManager.sampleStatePointer[0];
+			mat.normalID = 1;
+			mat.normalSRV = &basicMng.textureManager.texViewPointer[1];
+			mat.normalSampleState = &basicMng.textureManager.sampleStatePointer[1];
+			mat.mraID = 0;
+			mat.mraSRV = &basicMng.textureManager.texViewPointer[0];
+			mat.mraSampleState = &basicMng.textureManager.sampleStatePointer[0];
 		}
 
 		vertices.clear();
