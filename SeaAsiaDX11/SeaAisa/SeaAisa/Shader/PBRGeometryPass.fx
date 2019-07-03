@@ -20,17 +20,19 @@ cbuffer projectionTransform : register(b2)
 cbuffer MaterialParameter: register(b4)
 {
 	float4 _ColorFactor;
+	float4 _AmbientClor;
 	float _MetallicFactor;
 	float _RoughnessFactor;
 	float _IBLFactor;
-	float4 _AmbientClor;
 };
 
 // Textures/Samplers
 Texture2D Albedo : register(t0);
-SamplerState SamLinear : register(s0);
+SamplerState albedoSamLinear : register(s0);
 Texture2D NormalMap : register(t1);
+SamplerState normalSamLinear : register(s1);
 Texture2D MRA : register(t2);
+SamplerState mraSamLinear : register(s2);
 
 
 // Input/Output structures
@@ -87,11 +89,11 @@ PSOutput PS(PS_INPUT i)
 
 	//rt0
 	output.RT0.xyz = float3(i.t2w0.w, i.t2w1.w, i.t2w2.w);
-	float4 mra = MRA.Sample(SamLinear,i.uv);
+	float4 mra = MRA.Sample(mraSamLinear,i.uv);
 	output.RT0.w = mra.x;
 
 	//rt1
-	float4 tNormal = 2 * NormalMap.Sample(SamLinear, i.uv) - 1;
+	float4 tNormal = 2 * NormalMap.Sample(normalSamLinear, i.uv) - 1;
 	float4 wNormal = float4(0, 0, 0, 1);
 	wNormal.x = dot(i.t2w0.xyz, tNormal.xyz);
 	wNormal.y = dot(i.t2w1.xyz, tNormal.xyz);
@@ -100,7 +102,7 @@ PSOutput PS(PS_INPUT i)
 	output.RT1.w = mra.y;
 
 	//rt2
-	float4 albedo = Albedo.Sample(SamLinear, i.uv);
+	float4 albedo = Albedo.Sample(albedoSamLinear, i.uv);
 	output.RT2.xyz = albedo.xyz;
 	output.RT2.w = mra.z;
 

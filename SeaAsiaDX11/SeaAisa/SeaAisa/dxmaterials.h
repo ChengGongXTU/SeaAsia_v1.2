@@ -9,10 +9,10 @@ enum MaterialType
 
 struct MaterialParameter {
 	XMFLOAT4 _ColorFactor;
+	XMFLOAT4 _AmbientClor;
 	float _MetallicFactor;
 	float _RoughnessFactor;
 	float _IBLFactor;
-	XMFLOAT4 _AmbientClor;
 };
 
 class DxMaterials {

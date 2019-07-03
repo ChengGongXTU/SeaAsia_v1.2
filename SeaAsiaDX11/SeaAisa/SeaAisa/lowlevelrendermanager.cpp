@@ -127,8 +127,10 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(MaterialParameter);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 	bd.CPUAccessFlags = 0;
+	bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	bd.StructureByteStride = sizeof(MaterialParameter);
 	HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&bd, NULL, &materialConstant);
 	if (FAILED(hr))	return false;
 
@@ -141,10 +143,19 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 		//input material to constant buffer slot 4th
 		basicMng.dxDevice.context->PSSetConstantBuffers(4, 1, &materialConstant);
 
+		//input material tex
+		basicMng.dxDevice.context->PSSetShaderResources(0, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].albedoSRV);
+		basicMng.dxDevice.context->PSSetSamplers(0, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].albedoSampleState);
+		basicMng.dxDevice.context->PSSetShaderResources(1, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].normalSRV);
+		basicMng.dxDevice.context->PSSetSamplers(1, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].normalSampleState);
+		basicMng.dxDevice.context->PSSetShaderResources(2, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].mraSRV);
+		basicMng.dxDevice.context->PSSetSamplers(2, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].mraSampleState);
+
+
 		//draw mesh which belong to this material
 		basicMng.dxDevice.context->DrawIndexed(basicMng.objManager.DxObjMem[unity.objId]->FaceNumInEachMtl[i] * 3,
 			basicMng.objManager.DxObjMem[unity.objId]->beginFaceInEachMtl[i]*3, 0);
-		//basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
+		basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
 	}
 	if (materialConstant != NULL) materialConstant->Release();
 	return true;
@@ -641,7 +652,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & 
 	lStatus = lImporter->Import(pScene);
 	lImporter->Destroy();
 
-	//FbxSystemUnit::km. ConvertScene(pScene);
+	//FbxSystemUnit::km.ConvertScene(pScene);
 	FbxNode* pRootNode = pScene->GetRootNode();
 	//read fbx mesh
 	LoadFbxNode(pRootNode, NULL, -1, scene, basicMng);
@@ -1517,9 +1528,9 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			mat.normalID = 1;
 			mat.normalSRV = &basicMng.textureManager.texViewPointer[1];
 			mat.normalSampleState = &basicMng.textureManager.sampleStatePointer[1];
-			mat.mraID = 0;
-			mat.mraSRV = &basicMng.textureManager.texViewPointer[0];
-			mat.mraSampleState = &basicMng.textureManager.sampleStatePointer[0];
+			mat.mraID = 2;
+			mat.mraSRV = &basicMng.textureManager.texViewPointer[2];
+			mat.mraSampleState = &basicMng.textureManager.sampleStatePointer[2];
 		}
 
 		vertices.clear();

@@ -1410,10 +1410,10 @@ void ShowUnityProperty(bool* p_open, WindowsDevice & winDev, BasicManager &basic
 		}
 		else
 		{
-			ImGui::Text("Object ID: %.0f", unity.objId);
-			ImGui::Text("Vertex count: %.0f", obj->vertexNum);
-			ImGui::Text("Face count: %.0f", obj->faceNum);
-			ImGui::Text("Maertial count: %.0f",obj->materialNum);
+			ImGui::Text("Object ID: %d", unity.objId);
+			ImGui::Text("Vertex count: %d", obj->vertexNum);
+			ImGui::Text("Face count: %d", obj->faceNum);
+			ImGui::Text("Maertial count: %d",obj->materialNum);
 		}
 
 	}
@@ -1435,29 +1435,29 @@ void ShowUnityProperty(bool* p_open, WindowsDevice & winDev, BasicManager &basic
 					if(matID < 0 || matID >= basicMng.materialsManager.endMtlId)
 					{	
 						ImGui::Text("No Material Info");
-						ImGui::Text("Material ID: %.0f", matID);
+						ImGui::Text("Material ID: %d", matID);
 					}
 					else
 					{
 						DxMaterials& mat = basicMng.materialsManager.dxMaterial[matID];
-						ImGui::Text("Material ID: %.0f", matID);
+						ImGui::Text("Material ID: %d", matID);
 
 						//color
 						ImGui::ColorEdit4("Color", (float*)&mat.parameter._ColorFactor);
 
 						//albedo
-						ImGui::Text("Albedo Tex ID: %.0f", mat.albedoID);
+						ImGui::Text("Albedo Tex ID: %d", mat.albedoID);
 
 						//normal
-						ImGui::Text("Albedo Tex ID: %.0f", mat.normalID);
+						ImGui::Text("normal Tex ID: %d", mat.normalID);
 
 						//mra
-						ImGui::Text("Metallic, Roughness and AO Tex ID: %.0f", mat.mraID);
+						ImGui::Text("Metallic, Roughness and AO Tex ID: %d", mat.mraID);
 
 						//parametr
-						ImGui::SliderFloat("Metallic Fatcor",&mat.parameter._MetallicFactor, -20, 600, "%.2f");
-						ImGui::SliderFloat("Roughness Fatcor", &mat.parameter._RoughnessFactor, -20, 600, "%.2f");
-						ImGui::SliderFloat("IBL Fatcor", &mat.parameter._IBLFactor, -20, 600, "%.2f");
+						ImGui::SliderFloat("Metallic Fatcor",&mat.parameter._MetallicFactor, 0, 1, "%.2f");
+						ImGui::SliderFloat("Roughness Fatcor", &mat.parameter._RoughnessFactor, 0, 1, "%.2f");
+						ImGui::SliderFloat("IBL Fatcor", &mat.parameter._IBLFactor, 0, 1, "%.2f");
 
 						//ambient color
 						ImGui::ColorEdit4("Ambient Color", (float*)&mat.parameter._AmbientClor);

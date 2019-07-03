@@ -92,7 +92,7 @@ bool CameraManager::LoadCamera(DxDevice &dev, DxCamera & camera)
 
 bool CameraManager::InputCamera(DxDevice & dev)
 {
-	dev.context->VSSetConstantBuffers(0, 1, &worldjTransformBuffer);
+	//dev.context->VSSetConstantBuffers(0, 1, &worldjTransformBuffer);
 	dev.context->VSSetConstantBuffers(1, 1, &viewTransformBuffer);
 	dev.context->VSSetConstantBuffers(2, 1, &projTransformBuffer);
 
