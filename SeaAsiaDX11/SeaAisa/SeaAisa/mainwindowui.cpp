@@ -11,7 +11,12 @@ static bool show_render_setting_view = true;
 static bool show_camera_change_view = false;
 static bool show_materila_change_view = false;
 static bool Show_Example_App_Property_Editor = true;
-static bool Show_Texture_Resource = true;
+static bool Show_Texture_Resource = false;
+static bool Show_Object_Resource = false;
+static bool Show_Material_Resource = false;
+static bool Show_Light_Resource = false;
+static bool Show_Unity_Property = false;
+static int SelectUnityID = -1;
 
 void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& rayMng, bool *p_open)
 {
@@ -19,8 +24,12 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 	if (show_scene_resource_view)	ScenenResourceView(winDev, basicMng, renderMng, &show_scene_resource_view);
 	//if (show_resource_list_view)	ResourceListView(winDev, basicMng, &show_resource_list_view);
 	if (show_render_setting_view) RenderSettingView(winDev, basicMng, renderMng, &show_render_setting_view);
-	if (Show_Texture_Resource) ShowTextureResource(&Show_Texture_Resource, basicMng);
 	if (Show_Example_App_Property_Editor) ShowExampleAppPropertyEditor(&Show_Example_App_Property_Editor, basicMng);
+	if (Show_Texture_Resource) ShowTextureResource(&Show_Texture_Resource, basicMng);
+	if (Show_Object_Resource) ShowObjectResource(&Show_Object_Resource, basicMng);
+	if (Show_Material_Resource) ShowMaterialResource(&Show_Material_Resource, basicMng);
+	if (Show_Light_Resource) ShowLightResource(&Show_Light_Resource, basicMng);
+	if (Show_Unity_Property) ShowUnityProperty(&Show_Unity_Property,winDev,basicMng, renderMng, SelectUnityID);
 
 
 
@@ -84,11 +93,30 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Resource View"))
+			if (ImGui::BeginMenu("Texture View"))
 			{
-				if (ImGui::MenuItem("Show the View", NULL, &show_resource_list_view));
+				if (ImGui::MenuItem("Show the View", NULL, &Show_Texture_Resource));
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Object View"))
+			{
+				if (ImGui::MenuItem("Show the View", NULL, &Show_Object_Resource));
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Material View"))
+			{
+				if (ImGui::MenuItem("Show the View", NULL, &Show_Material_Resource));
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Light View"))
+			{
+				if (ImGui::MenuItem("Show the View", NULL, &Show_Light_Resource));
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -1169,9 +1197,10 @@ static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng)
 			bool node_open = ImGui::TreeNode("Unity", "%s_%u", unity.name, uid);
 			ImGui::NextColumn();
 			ImGui::AlignFirstTextHeightToWidgets();
-			if(ImGui::Button("Change", ImVec2(100, 15)));
+			if(ImGui::Button("Change", ImVec2(100, 15)))
 			{
-
+				Show_Unity_Property = true;
+				SelectUnityID = unity.UnityId;
 			}
 			ImGui::NextColumn();
 			if (node_open )
@@ -1233,5 +1262,211 @@ static void ShowTextureResource(bool* p_open, BasicManager &basicMng)
 		}
 		ImGui::SameLine();
 	}
+	ImGui::End();
+}
+
+void ShowObjectResource(bool * p_open, BasicManager & basicMng)
+{
+	ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(800, 300), ImGuiSetCond_FirstUseEver);
+
+	// Main body of the Demo window starts here.
+	if (!ImGui::Begin("Show Object Resource", p_open))
+	{
+		// Early out if the window is collapsed, as an optimization.
+		ImGui::End();
+		return;
+	}
+
+	for (int i = 0; i < basicMng.objManager.endObjId; i++)
+	{
+		if (basicMng.objManager.DxObjMem[i]->empty != true)
+		{
+			ImGui::PushID(i);
+			int frame_padding = -1 + i;     // -1 = uses default padding
+			const char name = (char)("0" + i);
+			ImGui::Button(&name, ImVec2(100, 20));
+			ImGui::PopID();
+		}
+		//ImGui::SameLine();
+	}
+	ImGui::End();
+}
+
+void ShowMaterialResource(bool * p_open, BasicManager & basicMng)
+{
+	ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(800, 300), ImGuiSetCond_FirstUseEver);
+
+	// Main body of the Demo window starts here.
+	if (!ImGui::Begin("Show Material Resource", p_open))
+	{
+		// Early out if the window is collapsed, as an optimization.
+		ImGui::End();
+		return;
+	}
+
+	for (int i = 0; i < basicMng.materialsManager.endMtlId; i++)
+	{
+		if (basicMng.materialsManager.dxMaterial[i].empty != true)
+		{
+			ImGui::PushID(i);
+			int frame_padding = -1 + i;     // -1 = uses default padding
+			const char name = (char)("0" + i);
+			ImGui::Button(&name, ImVec2(100, 20));
+			ImGui::PopID();
+		}
+		//ImGui::SameLine();
+	}
+	ImGui::End();
+}
+
+void ShowLightResource(bool * p_open, BasicManager & basicMng)
+{
+	ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(800, 300), ImGuiSetCond_FirstUseEver);
+
+	// Main body of the Demo window starts here.
+	if (!ImGui::Begin("Show Material Resource", p_open))
+	{
+		// Early out if the window is collapsed, as an optimization.
+		ImGui::End();
+		return;
+	}
+
+	ImGui::End();
+}
+
+void ShowUnityProperty(bool* p_open, WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, int SelectUnityID)
+{
+	RECT rect;
+	GetClientRect(winDev.hwnd, &rect);
+	float w = (float)(rect.right - rect.left);
+	float h = (float)(rect.bottom - rect.top);
+
+	DxScene& scene = basicMng.sceneManager.sceneList[0];
+
+	ImGui::SetNextWindowPos(ImVec2(w*0.6, 20));
+	ImGui::SetNextWindowSize(ImVec2(w*0.2, h*0.77));
+
+	if (!ImGui::Begin("Unity Property Editor", p_open, ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
+	{
+		ImGui::End();
+		return;
+	}
+
+	if (SelectUnityID <0 || SelectUnityID >= scene.endUnityId)
+	{	
+		ImGui::Text("No Unity Info");
+		ImGui::Text("Unity ID:  %.0f", SelectUnityID);
+		ImGui::End();
+		return;
+	}
+	
+	Unity& unity = scene.unityList[SelectUnityID];
+	DxObj* obj = basicMng.objManager.DxObjMem[unity.objId];
+
+	if (ImGui::CollapsingHeader("Wolrd Transform info"))
+	{	
+		ImGui::InputFloat("X", &unity.wolrdTransform.m.m._11);
+		ImGui::SameLine();
+		ImGui::InputFloat("Y", &unity.wolrdTransform.m.m._12);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._13);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._14);
+
+		ImGui::InputFloat("X", &unity.wolrdTransform.m.m._21);
+		ImGui::SameLine();
+		ImGui::InputFloat("Y", &unity.wolrdTransform.m.m._22);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._23);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._24);
+
+		ImGui::InputFloat("X", &unity.wolrdTransform.m.m._31);
+		ImGui::SameLine();
+		ImGui::InputFloat("Y", &unity.wolrdTransform.m.m._32);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._33);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._34);
+
+		ImGui::InputFloat("X", &unity.wolrdTransform.m.m._41);
+		ImGui::SameLine();
+		ImGui::InputFloat("Y", &unity.wolrdTransform.m.m._42);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._43);
+		ImGui::SameLine();
+		ImGui::InputFloat("Z", &unity.wolrdTransform.m.m._44);
+	}
+
+	if (ImGui::CollapsingHeader("Object Info"))
+	{
+		if(unity.objId <0 || unity.objId >= basicMng.objManager.endObjId)
+		{
+			ImGui::Text("No Object Info");
+			ImGui::Text("Object ID:  %.0f", unity.objId);
+		}
+		else
+		{
+			ImGui::Text("Object ID: %.0f", unity.objId);
+			ImGui::Text("Vertex count: %.0f", obj->vertexNum);
+			ImGui::Text("Face count: %.0f", obj->faceNum);
+			ImGui::Text("Maertial count: %.0f",obj->materialNum);
+		}
+
+	}
+
+	if (ImGui::CollapsingHeader("Material"))
+	{
+		if (unity.materialNum <= 0 || unity.MaterialsIdIndex == NULL)
+		{
+			ImGui::Text("No Material Info");
+		}
+		else
+		{
+			for (int i = 0; i < unity.materialNum; i++)
+			{	
+				const char* name = "0" + i;
+				if (ImGui::CollapsingHeader(name))
+				{	
+					int matID = unity.MaterialsIdIndex[i];
+					if(matID < 0 || matID >= basicMng.materialsManager.endMtlId)
+					{	
+						ImGui::Text("No Material Info");
+						ImGui::Text("Material ID: %.0f", matID);
+					}
+					else
+					{
+						DxMaterials& mat = basicMng.materialsManager.dxMaterial[matID];
+						ImGui::Text("Material ID: %.0f", matID);
+
+						//color
+						ImGui::ColorEdit4("Color", (float*)&mat.parameter._ColorFactor);
+
+						//albedo
+						ImGui::Text("Albedo Tex ID: %.0f", mat.albedoID);
+
+						//normal
+						ImGui::Text("Albedo Tex ID: %.0f", mat.normalID);
+
+						//mra
+						ImGui::Text("Metallic, Roughness and AO Tex ID: %.0f", mat.mraID);
+
+						//parametr
+						ImGui::SliderFloat("Metallic Fatcor",&mat.parameter._MetallicFactor, -20, 600, "%.2f");
+						ImGui::SliderFloat("Roughness Fatcor", &mat.parameter._RoughnessFactor, -20, 600, "%.2f");
+						ImGui::SliderFloat("IBL Fatcor", &mat.parameter._IBLFactor, -20, 600, "%.2f");
+
+						//ambient color
+						ImGui::ColorEdit4("Ambient Color", (float*)&mat.parameter._AmbientClor);
+						
+					}
+				}
+			}
+		}
+	}
+
 	ImGui::End();
 }

@@ -26,5 +26,9 @@ static void CameraCangeView(BasicManager &basicMng, bool *p_open);
 static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& renderMng,bool *p_open);
 static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng);
 static void ShowTextureResource(bool* p_open, BasicManager &basicMng);
+static void ShowObjectResource(bool* p_open, BasicManager &basicMng);
+static void ShowMaterialResource(bool* p_open, BasicManager &basicMng);
+static void ShowLightResource(bool* p_open, BasicManager &basicMng);
+static void ShowUnityProperty(bool* p_open, WindowsDevice & winDev, BasicManager &basicMng,LowLevelRendermanager &renderMng, int SelectUnityID);
 
 void MainWindowUI(WindowsDevice & winDev,BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& RayMng,bool *p_open);

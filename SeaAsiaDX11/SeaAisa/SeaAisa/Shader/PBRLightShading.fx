@@ -141,7 +141,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 
 	half3 finalCol = L_direct + L_indirect;
 
-	return half4(wNormal,1.0);
+	return half4(color,1.0);
 
 
 }
