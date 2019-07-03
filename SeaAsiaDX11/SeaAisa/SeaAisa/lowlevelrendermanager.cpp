@@ -116,12 +116,6 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	basicMng.dxDevice.context->UpdateSubresource(cameraManager.worldjTransformBuffer, 0, NULL, &m, 0, 0);
 	basicMng.dxDevice.context->VSSetConstantBuffers(0, 1, &cameraManager.worldjTransformBuffer);
 
-	if (unity.textureId != -1)
-	{
-		basicMng.dxDevice.context->PSSetShaderResources(0, 1, &basicMng.textureManager.texViewPointer[unity.textureId]);
-		basicMng.dxDevice.context->PSSetSamplers(0, 1, &basicMng.textureManager.sampleStatePointer[unity.samplerStateId]);
-	}
-
 	ID3D11Buffer* materialConstant = NULL;
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
@@ -155,7 +149,7 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 		//draw mesh which belong to this material
 		basicMng.dxDevice.context->DrawIndexed(basicMng.objManager.DxObjMem[unity.objId]->FaceNumInEachMtl[i] * 3,
 			basicMng.objManager.DxObjMem[unity.objId]->beginFaceInEachMtl[i]*3, 0);
-		basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
+		//basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
 	}
 	if (materialConstant != NULL) materialConstant->Release();
 	return true;
@@ -817,6 +811,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		case fbxsdk::FbxNodeAttribute::eCameraSwitcher:
 			break;
 		case fbxsdk::FbxNodeAttribute::eLight:
+			LoadFBXLight(pNode, scene, basicMng, &scene.unityList[currentUnityID]);
 			break;
 		case fbxsdk::FbxNodeAttribute::eOpticalReference:
 			break;
@@ -1555,5 +1550,34 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 	}
 
 }
+
+void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicManager &basicMng, Unity *unity)
+{
+	//get mesh
+	FbxLight *pLight = NULL;
+	pLight = pNode->GetLight();
+	if (pLight == NULL)
+	{
+		return;
+	}
+
+	FbxLight::EType type = pLight->LightType;
+
+	switch (type)
+	{
+	case fbxsdk::FbxLight::ePoint:
+	
+		break;
+	case fbxsdk::FbxLight::eDirectional:
+		break;
+	case fbxsdk::FbxLight::eSpot:
+		break;
+	case fbxsdk::FbxLight::eArea:
+		break;
+	case fbxsdk::FbxLight::eVolume:
+		break;
+	default:
+		break;
+	}
 
 

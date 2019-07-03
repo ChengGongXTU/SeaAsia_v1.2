@@ -2,8 +2,53 @@
 
 void LightManager::StartUp()
 {
-	PointLightBuffer = NULL;
-	DirLightBuffer = NULL;
+	PointLightBuffer = new ID3D11Buffer*[1000];
+	DirLightBuffer = new ID3D11Buffer*[1000];
+	SpotLightBuffer = new ID3D11Buffer*[1000];
+
+	DirLightSRV = new ID3D11ShaderResourceView*[1000];
+	PointLightSRV = new ID3D11ShaderResourceView*[1000];
+	SpotLightSRV = new ID3D11ShaderResourceView*[1000];
+
+	dxDirLights = new DxDirLight[1000];
+	dxPointLights = new DxPointLight[1000];
+	dxPointLights = new DxPointLight[1000];
+
+	for (int i = 0; i < 1000; i++)
+	{
+		PointLightBuffer[i] = NULL;
+		DirLightBuffer[i] = NULL;
+		SpotLightBuffer[i] = NULL;
+		DirLightSRV[i] = NULL;
+		PointLightSRV[i] = NULL;
+		SpotLightSRV[i] = NULL;
+
+		dxDirLights[i].Color = XMFLOAT4(0, 0, 0, 1);
+		dxDirLights[i].intensity = 0;
+		dxDirLights[i].Dir = XMFLOAT4(0.707, -0.707, 0, 0);
+
+		dxPointLights[i].Color = XMFLOAT4(0, 0, 0, 1);
+		dxPointLights[i].intensity = 0;
+		dxPointLights[i].Pos = XMFLOAT4(0, 0, 0, 1);
+		dxPointLights[i].range = 0;
+
+		dxSpotLights[i].Color = XMFLOAT4(0, 0, 0, 1);
+		dxSpotLights[i].intensity = 0;
+		dxSpotLights[i].Pos = XMFLOAT4(0, 0, 0, 1);
+		dxSpotLights[i].Dir = XMFLOAT4(0.707, -0.707, 0, 0);
+		dxSpotLights[i].range = 0;
+		dxSpotLights[i].angle_p = 0;
+		dxSpotLights[i].angle_u = 1;
+
+		endDirLightID = 0;
+		endPointLightID = 0;
+		endSpotLightID = 0;
+
+		dirLightCount = 0;
+		pointLightCount = 0;
+		spotLightCount = 0;
+		
+	}
 }
 
 void LightManager::ShutUp()
@@ -19,14 +64,18 @@ bool LightManager::CreateBuffer(DxDevice & dev,DxDirLight &dl)
 
 	dlDesc.Usage = D3D11_USAGE_DEFAULT;
 	dlDesc.ByteWidth = sizeof(DxDirLight);
-	dlDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	dlDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 	dlDesc.CPUAccessFlags = 0;
+	dlDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	dlDesc.StructureByteStride = sizeof(DxDirLight);
 
-	HRESULT hr = dev.device->CreateBuffer(&dlDesc, NULL, &DirLightBuffer);
+	HRESULT hr = dev.device->CreateBuffer(&dlDesc, NULL, &DirLightBuffer[endDirLightID]);
 
 	if (FAILED(hr))	return false;
-
+	endDirLightID++;
+	dirLightCount++;
 	return true;
+
 }
 
 bool LightManager::CreateBuffer(DxDevice & dev, DxPointLight & pl)
@@ -35,20 +84,43 @@ bool LightManager::CreateBuffer(DxDevice & dev, DxPointLight & pl)
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(DxPointLight);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 	bd.CPUAccessFlags = 0;
+	bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	bd.StructureByteStride = sizeof(DxPointLight);
 
-	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &PointLightBuffer);
+	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &PointLightBuffer[endPointLightID]);
 
 	if (FAILED(hr))	return false;
+	endPointLightID++;
+	pointLightCount++;
+	return true;
+}
 
+bool LightManager::CreateBuffer(DxDevice & dev, DxSpotLight & pl)
+{
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(DxSpotLight);
+	bd.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	bd.CPUAccessFlags = 0;
+	bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	bd.StructureByteStride = sizeof(DxSpotLight);
+
+	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &PointLightBuffer[endSpotLightID]);
+
+	if (FAILED(hr))	return false;
+	endSpotLightID++;
+	spotLightCount++;
 	return true;
 }
 
 bool LightManager::SetDirLight(DxDevice &dev, DxDirLight &dirLight)
 {	
 
-	dev.context->UpdateSubresource(DirLightBuffer, 0, NULL,&dirLight, 0, 0);
-	dev.context->PSSetConstantBuffers(3, 1, &DirLightBuffer);
+	//dev.context->UpdateSubresource(DirLightBuffer, 0, NULL,&dirLight, 0, 0);
+	//dev.context->PSSetConstantBuffers(3, 1, &DirLightBuffer);
+	return false;
 	return true;
 }
