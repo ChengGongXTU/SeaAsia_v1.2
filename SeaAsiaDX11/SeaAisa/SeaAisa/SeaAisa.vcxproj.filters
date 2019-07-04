@@ -411,9 +411,11 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="Shader\PBRGeometryPass.fx" />
-    <None Include="Shader\PBRLightShading.fx" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Texture.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shader\PBRLightShading.fx" />
   </ItemGroup>
 </Project>

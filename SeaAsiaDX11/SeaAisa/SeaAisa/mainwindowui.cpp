@@ -694,6 +694,7 @@ static void CameraSettingView(BasicManager &basicMng, bool *p_open)
 		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].cameraList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endCameraId].Init(
 			position[0], position[1], position[2], lookat[0], lookat[1], lookat[2], up[0], up[1], up[2], cnear, cfar, aspect*3.1415f / 360.f, cwidth, cheight);
 		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endCameraId++;
+		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].cameraNum++;
 		show_camera_setting_view = false;
 	}
 
@@ -849,12 +850,12 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 	static wchar_t vsShaderNameWchar[129] = L"";
 	static char vsShaderNameChar[128] = "Shader/PBRGeometryPass.fx"; // "hlsl.fx";
 	static char vsName[128] = "VS";
-	static char vsVersion[128] = "vs_4_0";
+	static char vsVersion[128] = "vs_5_0";
 
 	static wchar_t psShaderNameWchar[129] = L"";
 	static char psShaderNameChar[128] = "Shader/PBRLightShading.fx"; // "hlsl.fx";
 	static char psName[128] = "PS";
-	static char psVersion[128] = "ps_4_0";
+	static char psVersion[128] = "ps_5_0";
 
 	ImGui::SetNextWindowPos(ImVec2(w*0.8, 20));
 	ImGui::SetNextWindowSize(ImVec2(w*0.2, h*0.77));

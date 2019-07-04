@@ -18,6 +18,14 @@ public:
 	ID3D11Buffer** PointLightBuffer;
 	ID3D11Buffer** SpotLightBuffer;
 
+	int DirLightType;
+	int PointLightType;
+	int SpotLightType;
+
+	ID3D11Buffer* DirLightTypeBuffer;
+	ID3D11Buffer* PointLightTypeBuffer;
+	ID3D11Buffer* SpotLightTypeBuffer;
+
 	ID3D11ShaderResourceView** DirLightSRV;
 	ID3D11ShaderResourceView** PointLightSRV;
 	ID3D11ShaderResourceView** SpotLightSRV;
@@ -37,4 +45,6 @@ public:
 	bool CreateBuffer(DxDevice &dev, DxPointLight &pl);
 	bool CreateBuffer(DxDevice & dev, DxSpotLight & pl);
 	bool SetDirLight(DxDevice &dev,DxDirLight &dirLight);
+
+	bool AddDirLight(DxDevice &dev, XMFLOAT4 color, float intensity, XMFLOAT4 dir);
 };

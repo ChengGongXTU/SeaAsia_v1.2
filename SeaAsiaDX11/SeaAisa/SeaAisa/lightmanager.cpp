@@ -12,7 +12,7 @@ void LightManager::StartUp()
 
 	dxDirLights = new DxDirLight[1000];
 	dxPointLights = new DxPointLight[1000];
-	dxPointLights = new DxPointLight[1000];
+	dxSpotLights = new DxSpotLight[1000];
 
 	for (int i = 0; i < 1000; i++)
 	{
@@ -47,8 +47,13 @@ void LightManager::StartUp()
 		dirLightCount = 0;
 		pointLightCount = 0;
 		spotLightCount = 0;
-		
+	
 	}
+
+	DirLightType = 0;
+	PointLightType = 1;
+	SpotLightType = 2;
+
 }
 
 void LightManager::ShutUp()
@@ -72,6 +77,20 @@ bool LightManager::CreateBuffer(DxDevice & dev,DxDirLight &dl)
 	HRESULT hr = dev.device->CreateBuffer(&dlDesc, NULL, &DirLightBuffer[endDirLightID]);
 
 	if (FAILED(hr))	return false;
+
+	dev.context->UpdateSubresource(DirLightBuffer[endDirLightID], 0, 0,
+		&dxDirLights[endDirLightID], 0, 0);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
+	desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	desc.Buffer.ElementOffset = 0;
+	desc.Buffer.ElementWidth = 1;
+
+	hr = dev.device->CreateShaderResourceView(DirLightBuffer[endDirLightID], &desc, &DirLightSRV[endDirLightID]);
+
+	if (FAILED(hr))	return false;
+
 	endDirLightID++;
 	dirLightCount++;
 	return true;
@@ -92,6 +111,20 @@ bool LightManager::CreateBuffer(DxDevice & dev, DxPointLight & pl)
 	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &PointLightBuffer[endPointLightID]);
 
 	if (FAILED(hr))	return false;
+
+	dev.context->UpdateSubresource(PointLightBuffer[endPointLightID], 0, 0, 
+		&dxPointLights[endPointLightID], 0, 0);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
+	desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	desc.Buffer.ElementOffset = 0;
+	desc.Buffer.ElementWidth = 1;
+
+	hr = dev.device->CreateShaderResourceView(PointLightBuffer[endPointLightID], &desc, &PointLightSRV[endPointLightID]);
+
+	if (FAILED(hr))	return false;
+
 	endPointLightID++;
 	pointLightCount++;
 	return true;
@@ -108,9 +141,23 @@ bool LightManager::CreateBuffer(DxDevice & dev, DxSpotLight & pl)
 	bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	bd.StructureByteStride = sizeof(DxSpotLight);
 
-	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &PointLightBuffer[endSpotLightID]);
+	HRESULT hr = dev.device->CreateBuffer(&bd, NULL, &SpotLightBuffer[endSpotLightID]);
 
 	if (FAILED(hr))	return false;
+
+	dev.context->UpdateSubresource(SpotLightBuffer[endSpotLightID], 0, 0,
+		&dxSpotLights[endSpotLightID], 0, 0);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
+	desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	desc.Buffer.ElementOffset = 0;
+	desc.Buffer.ElementWidth = 1;
+
+	hr = dev.device->CreateShaderResourceView(SpotLightBuffer[endSpotLightID], &desc, &SpotLightSRV[endSpotLightID]);
+
+	if (FAILED(hr))	return false;
+
 	endSpotLightID++;
 	spotLightCount++;
 	return true;
@@ -122,5 +169,17 @@ bool LightManager::SetDirLight(DxDevice &dev, DxDirLight &dirLight)
 	//dev.context->UpdateSubresource(DirLightBuffer, 0, NULL,&dirLight, 0, 0);
 	//dev.context->PSSetConstantBuffers(3, 1, &DirLightBuffer);
 	return false;
+	return true;
+}
+
+bool LightManager::AddDirLight(DxDevice & dev, XMFLOAT4 color, float intensity, XMFLOAT4 dir)
+{	
+	DxDirLight& dirlight = dxDirLights[endDirLightID];
+	dirlight.Color = color;
+	dirlight.Dir = dir;
+	dirlight.intensity = intensity;
+
+	CreateBuffer(dev, dirlight);
+
 	return true;
 }

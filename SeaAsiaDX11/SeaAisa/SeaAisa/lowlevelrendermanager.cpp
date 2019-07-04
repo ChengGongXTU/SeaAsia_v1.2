@@ -128,14 +128,24 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&bd, NULL, &materialConstant);
 	if (FAILED(hr))	return false;
 
+	ID3D11ShaderResourceView* matParameterSRV = NULL;
+	D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
+	desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	desc.Buffer.ElementOffset = 0;
+	desc.Buffer.ElementWidth = 1;
+
+	hr = basicMng.dxDevice.device->CreateShaderResourceView(materialConstant, &desc, &matParameterSRV);
+	if (FAILED(hr))	return false;
+
 	for (int i = 0; i < unity.materialNum; i++) {
 
 		// update material
 		basicMng.dxDevice.context->UpdateSubresource(materialConstant, 0, 0,
 			&basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].parameter, 0, 0);
 
-		//input material to constant buffer slot 4th
-		basicMng.dxDevice.context->PSSetConstantBuffers(4, 1, &materialConstant);
+		//input material to shader resource view 
+		basicMng.dxDevice.context->PSSetShaderResources(3, 1, &matParameterSRV);
 
 		//input material tex
 		basicMng.dxDevice.context->PSSetShaderResources(0, 1, basicMng.materialsManager.dxMaterial[unity.MaterialsIdIndex[i]].albedoSRV);
@@ -152,6 +162,7 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 		//basicMng.dxDevice.context->Draw(basicMng.objManager.DxObjMem[unity.objId]->vertexNum, 0);
 	}
 	if (materialConstant != NULL) materialConstant->Release();
+	if (matParameterSRV != NULL) matParameterSRV->Release();
 	return true;
 
 }
@@ -183,6 +194,25 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 	if (!primitiveManager.LoadPPVertex(basicMng.dxDevice, basicMng.objManager))	return false;
 	if (!primitiveManager.InputVertexBufferLightShading(basicMng.dxDevice, shaderManager))	return false;
 
+	//camera pos
+	if (basicMng.sceneManager.sceneList[SceneId].endCameraId > 0 && cameraId < basicMng.sceneManager.sceneList[SceneId].endCameraId)
+	{
+		Point& cameraPos = basicMng.sceneManager.sceneList[SceneId].cameraList[cameraId].at;
+		XMFLOAT4 xmCameraPos = XMFLOAT4(cameraPos.x, cameraPos.y, cameraPos.z, 1.0);
+		ID3D11Buffer* cameraPosBuffer = NULL;
+		D3D11_BUFFER_DESC cameraBd;
+		ZeroMemory(&cameraBd, sizeof(cameraBd));
+		cameraBd.Usage = D3D11_USAGE_DEFAULT;
+		cameraBd.ByteWidth = sizeof(XMFLOAT4);
+		cameraBd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cameraBd.CPUAccessFlags = 0;
+		HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&cameraBd, NULL, &cameraPosBuffer);
+		if (FAILED(hr))	return false;
+		basicMng.dxDevice.context->UpdateSubresource(cameraPosBuffer, 0, NULL, &xmCameraPos, 0, 0);
+		basicMng.dxDevice.context->VSSetConstantBuffers(1, 1, &cameraPosBuffer);
+		if (cameraPosBuffer != NULL) cameraPosBuffer->Release();
+	}
+
 	//G buffer RT
 	basicMng.dxDevice.context->PSSetShaderResources(0, 1, &basicMng.dxDevice.rtsrv[1]);
 	basicMng.dxDevice.context->PSSetSamplers(0, 1, &basicMng.dxDevice.rtSampler[1]);
@@ -191,8 +221,44 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 	basicMng.dxDevice.context->PSSetShaderResources(2, 1, &basicMng.dxDevice.rtsrv[3]);
 	basicMng.dxDevice.context->PSSetSamplers(2, 1, &basicMng.dxDevice.rtSampler[3]);
 
-	basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+	//light shading
+	ID3D11Buffer* lightTypeBuffer = NULL;
+	D3D11_BUFFER_DESC lightBd;
+	ZeroMemory(&lightBd, sizeof(lightBd));
+	lightBd.Usage = D3D11_USAGE_DEFAULT;
+	lightBd.ByteWidth = sizeof(XMFLOAT4);
+	lightBd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	lightBd.CPUAccessFlags = 0;
+	HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&lightBd, NULL, &lightTypeBuffer);
+	if (FAILED(hr))	return false;
 
+	for (int i = 0; i < lightManager.endDirLightID; i++)
+	{	
+		basicMng.dxDevice.context->UpdateSubresource(lightManager.DirLightBuffer[i], 0, NULL, &lightManager.dxDirLights[i], 0, 0);
+		basicMng.dxDevice.context->PSSetShaderResources(3, 1, &lightManager.DirLightSRV[i]);
+		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.DirLightType, 0, 0);
+		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
+		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+	}
+
+	for (int i = 0; i < lightManager.endPointLightID; i++)
+	{	
+		basicMng.dxDevice.context->UpdateSubresource(lightManager.PointLightBuffer[i], 0, NULL, &lightManager.dxPointLights[i], 0, 0);
+		basicMng.dxDevice.context->PSSetShaderResources(3, 1, &lightManager.PointLightSRV[i]);
+		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.PointLightType, 0, 0);
+		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
+		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+	}
+
+	for (int i = 0; i < lightManager.endSpotLightID; i++)
+	{	
+		basicMng.dxDevice.context->UpdateSubresource(lightManager.SpotLightBuffer[i], 0, NULL, &lightManager.dxSpotLights[i], 0, 0);
+		basicMng.dxDevice.context->PSSetShaderResources(3, 1, &lightManager.SpotLightSRV[i]);
+		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.SpotLightType, 0, 0);
+		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
+		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+	}
+	if (lightTypeBuffer != NULL) lightTypeBuffer->Release();
 	return true;
 }
 
@@ -1563,14 +1629,87 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 
 	FbxLight::EType type = pLight->LightType;
 
+	//
+	FbxDouble3 pl_color;
+	FbxDouble pl_intensity;
+	FbxDouble pl_range;
+	FbxAMatrix pl_wolrdM;
+	FbxVector4 position;
+	FbxVector4 pl_position;
+	DxPointLight& pointlight = lightManager.dxPointLights[lightManager.endPointLightID];
+
+
+	FbxDouble3 dl_color;
+	FbxDouble dl_intensity;
+	FbxAMatrix dl_wolrdM;
+	FbxVector4 dir;
+	FbxVector4 dl_dir;
+	DxDirLight& dirlight = lightManager.dxDirLights[lightManager.endDirLightID];
+
+	DxSpotLight& spotlight = lightManager.dxSpotLights[lightManager.endSpotLightID];
+	FbxDouble3 spl_color;
+	FbxDouble spl_intensity;
+	FbxDouble spl_range;
+	FbxAMatrix spl_wolrdM;
+	FbxVector4 spl_position;
+	FbxVector4 spl_dir;
+
 	switch (type)
 	{
 	case fbxsdk::FbxLight::ePoint:
-	
+
+		pl_color = pLight->Color.Get();
+		 pl_intensity = pLight->Intensity.Get();
+		 pl_range = pLight->FarAttenuationEnd.Get();
+
+		pointlight.Color = XMFLOAT4(pl_color.mData[0], pl_color.mData[1], pl_color.mData[2], 1);
+		pointlight.intensity = pl_intensity / 100.0;
+		pointlight.range = pl_range;
+
+		 pl_wolrdM = pNode->EvaluateGlobalTransform();
+		 position = FbxVector4(0, 0, 0, 1);
+		 pl_position = pl_wolrdM.MultT(position);
+		pointlight.Pos = XMFLOAT4(pl_position.mData[0] / pl_position.mData[3], pl_position.mData[1] / pl_position.mData[3], pl_position.mData[2] / pl_position.mData[3], 1);
+
+		lightManager.CreateBuffer(basicMng.dxDevice, pointlight);
+
 		break;
 	case fbxsdk::FbxLight::eDirectional:
+		dl_color = pLight->Color.Get();
+		dl_intensity = pLight->Intensity.Get();
+
+		dirlight.Color = XMFLOAT4(dl_color.mData[0], dl_color.mData[1], dl_color.mData[2], 1);
+		dirlight.intensity = dl_intensity / 100.0;
+
+		dl_wolrdM = pNode->EvaluateGlobalTransform();
+		dir = FbxVector4(0, 0, 1, 0);
+		dl_dir = dl_wolrdM.MultT(dir);
+		dirlight.Dir = XMFLOAT4(dl_dir.mData[0], dl_dir.mData[1], dl_dir.mData[2], dl_dir.mData[3]);
+
+		lightManager.CreateBuffer(basicMng.dxDevice, dirlight);
 		break;
 	case fbxsdk::FbxLight::eSpot:
+		spotlight = lightManager.dxSpotLights[lightManager.endSpotLightID];
+		spl_color = pLight->Color.Get();
+		spl_intensity = pLight->Intensity.Get();
+		spl_range = pLight->FarAttenuationEnd.Get();
+
+		spotlight.Color = XMFLOAT4(spl_color.mData[0], spl_color.mData[1], spl_color.mData[2], 1);
+		spotlight.intensity = spl_intensity / 100.0;
+		spotlight.range = spl_range;
+		spotlight.angle_u = pLight->InnerAngle.Get();
+		spotlight.angle_u = pLight->OuterAngle.Get();
+
+		spl_wolrdM = pNode->EvaluateGlobalTransform();
+		spl_position = FbxVector4(0, 0, 0, 1);
+		spl_position = spl_wolrdM.MultT(spl_position);
+		spotlight.Pos = XMFLOAT4(spl_position.mData[0] / spl_position.mData[3], spl_position.mData[1] / spl_position.mData[3], spl_position.mData[2] / spl_position.mData[3], 1);
+
+		spl_dir = FbxVector4(0, 0, 1, 0);
+		spl_dir = dl_wolrdM.MultT(spl_dir);
+		spotlight.Dir = XMFLOAT4(spl_dir.mData[0], spl_dir.mData[1], spl_dir.mData[2], spl_dir.mData[3]);
+
+		lightManager.CreateBuffer(basicMng.dxDevice, spotlight);
 		break;
 	case fbxsdk::FbxLight::eArea:
 		break;
@@ -1579,5 +1718,6 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 	default:
 		break;
 	}
+}
 
 

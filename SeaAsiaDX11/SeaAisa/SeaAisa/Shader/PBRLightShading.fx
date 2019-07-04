@@ -5,16 +5,6 @@ Texture2D RT1 : register(t1);
 Texture2D RT2 : register(t2);
 SamplerState SamLinear : register(s0);
 
-// Constants
-cbuffer LightParams : register(b0)
-{
-	float3 LightPos;
-	float3 LightColor;
-	float3 LightDirection;
-	float2 SpotlightAngles;
-	float4 LightRange;
-};
-
 //ibl
 TextureCube iblCubeMap;
 
@@ -25,10 +15,34 @@ SamplerState iblSamLinear
 	AddressV = Wrap;
 };
 
+// Constants
+struct LightParams
+{
+	float4 LightPos;
+	float4 LightColor;
+	float4 LightDirection;
+	float LightIntensity;
+	float LightRange;
+	float SpotlightInnerAngles;
+	float SpotlightOuterAngles;
+
+};
+
+StructuredBuffer<LightParams> currentLightParams : register(t3);
+
+cbuffer LightType : register(b0)
+{	
+	//0 dir
+	//1 point
+	//2 spot
+	int type;
+};
+
 cbuffer CameraParams : register(b1)
 {
-	float3 CameraPos;
+	float4 CameraPos;
 };
+
 
 
 // Input/Output structures
@@ -53,6 +67,54 @@ PS_INPUT VS(VS_INPUT v)
 	return o;
 }
 
+float f_JsutCause2(in float r, in float r_max)
+{	
+	float f = 1 - pow(r / r_max, 2);
+	f = max(f, 0.0);
+	return pow(f, 2);
+}
+
+float3 LightDirAndColor(inout float3 dir, in float3 worldPos)
+{
+	if (type == 0)
+	{
+		dir = currentLightParams[0].LightDirection.xyz;
+		return currentLightParams[0].LightColor.xyz * currentLightParams[0].LightIntensity;
+
+	}
+
+	if (type == 1)
+	{
+		dir = worldPos - currentLightParams[0].LightPos.xyz;
+		float len = length(dir);
+		dir = normalize(dir);
+		float f_dist = f_JsutCause2(len, currentLightParams[0].LightRange);
+		return currentLightParams[0].LightColor.xyz * currentLightParams[0].LightIntensity * f_dist;
+
+	}
+
+	if (type == 2)
+	{
+		dir = worldPos - currentLightParams[0].LightPos.xyz;
+		float len = length(dir);
+		dir = normalize(dir);
+		
+		float f_dist = f_JsutCause2(len, currentLightParams[0].LightRange);
+
+		float cos_s = dot(float4(dir, 0.0), float4(currentLightParams[0].LightDirection.xyz,0.0));
+		float cos_u = cos(currentLightParams[0].SpotlightOuterAngles * 3.1415 / 180.0);
+		float cos_p = cos(currentLightParams[0].SpotlightInnerAngles * 3.1415 / 180.0);
+
+		float t = (cos_s - cos_u) / (cos_p - cos_u);
+		float f_dir_smoothstep = t * t*(3 - 2 * t);
+
+		return currentLightParams[0].LightColor.xyz * currentLightParams[0].LightIntensity * f_dist * f_dir_smoothstep;
+	}
+
+	return float3(0, 0, 0);
+
+}
+
 float4 PS(PS_INPUT i) : SV_TARGET
 {
 	//sample rt info
@@ -68,11 +130,11 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float3 albedo = rt2.xyz;
 
 	//view
-	float3 viewDir = normalize(CameraPos - wPos);
+	float3 viewDir = normalize(CameraPos.xyz - wPos);
 
 	//Directional light info
-	float3 lightDir = LightDirection;
-	float3 lightCol = LightColor;
+	float3 lightDir = float3(0, 0, 1);
+	float3 lightCol = LightDirAndColor(lightDir, wPos);
 	float dot_nl = dot(lightDir, wNormal);
 	float dot_nl1 = max(dot_nl, 0);
 	float dot_nv = dot(viewDir, wNormal);
@@ -141,7 +203,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 
 	half3 finalCol = L_direct + L_indirect;
 
-	return half4(wNormal,1.0);
+	return half4(rt2.xyz,1.0);
 
 
 }

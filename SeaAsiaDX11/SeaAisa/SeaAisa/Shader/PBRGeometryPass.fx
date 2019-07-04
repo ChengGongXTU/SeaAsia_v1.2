@@ -17,14 +17,7 @@ cbuffer projectionTransform : register(b2)
 	matrix mProjection;
 };
 
-cbuffer MaterialParameter: register(b4)
-{
-	float4 _ColorFactor;
-	float4 _AmbientClor;
-	float _MetallicFactor;
-	float _RoughnessFactor;
-	float _IBLFactor;
-};
+
 
 // Textures/Samplers
 Texture2D Albedo : register(t0);
@@ -33,6 +26,17 @@ Texture2D NormalMap : register(t1);
 SamplerState normalSamLinear : register(s1);
 Texture2D MRA : register(t2);
 SamplerState mraSamLinear : register(s2);
+
+struct MaterialParameter 
+{
+	float4 _ColorFactor;
+	float4 _AmbientClor;
+	float _MetallicFactor;
+	float _RoughnessFactor;
+	float _IBLFactor;
+};
+
+StructuredBuffer<MaterialParameter> currentMaterialParameter : register(t3);
 
 
 // Input/Output structures
@@ -102,7 +106,7 @@ PSOutput PS(PS_INPUT i)
 	output.RT1.w = mra.y;
 
 	//rt2
-	float4 albedo = Albedo.Sample(albedoSamLinear, i.uv);
+	float4 albedo = Albedo.Sample(albedoSamLinear, i.uv)* currentMaterialParameter[0]._ColorFactor;
 	output.RT2.xyz = albedo.xyz;
 	output.RT2.w = mra.z;
 
