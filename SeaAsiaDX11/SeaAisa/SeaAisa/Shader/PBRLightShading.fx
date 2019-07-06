@@ -3,7 +3,9 @@
 Texture2D RT0 : register(t0);
 Texture2D RT1 : register(t1);
 Texture2D RT2 : register(t2);
-SamplerState SamLinear : register(s0);
+SamplerState SamLinear0 : register(s0);
+SamplerState SamLinear1 : register(s1);
+SamplerState SamLinear2 : register(s2);
 
 //ibl
 TextureCube iblCubeMap;
@@ -16,19 +18,43 @@ SamplerState iblSamLinear
 };
 
 // Constants
-struct LightParams
+struct DirLight
+{
+	float4 LightDirection;
+	float4 LightColor;
+	float LightIntensity;
+
+};
+
+StructuredBuffer<DirLight> DirLightArray : register(t3);
+
+// Constants
+struct PointLight
+{
+	float4 LightPos;
+	float4 LightColor;
+	float LightIntensity;
+	float LightRange;
+
+};
+
+StructuredBuffer<PointLight> PointLightArray : register(t4);
+
+// Constants
+struct SpotLight
 {
 	float4 LightPos;
 	float4 LightColor;
 	float4 LightDirection;
 	float LightIntensity;
 	float LightRange;
-	float SpotlightInnerAngles;
 	float SpotlightOuterAngles;
+	float SpotlightInnerAngles;
+
 
 };
 
-StructuredBuffer<LightParams> currentLightParams : register(t3);
+StructuredBuffer<SpotLight> SpotLightArray : register(t5);
 
 cbuffer LightType : register(b0)
 {	
@@ -78,37 +104,37 @@ float3 LightDirAndColor(inout float3 dir, in float3 worldPos)
 {
 	if (type == 0)
 	{
-		dir = currentLightParams[0].LightDirection.xyz;
-		return currentLightParams[0].LightColor.xyz * currentLightParams[0].LightIntensity;
+		dir = normalize(DirLightArray[0].LightDirection.xyz);
+		return DirLightArray[0].LightColor.xyz * DirLightArray[0].LightIntensity;
 
 	}
 
 	if (type == 1)
 	{
-		dir = worldPos - currentLightParams[0].LightPos.xyz;
+		dir = worldPos - PointLightArray[0].LightPos.xyz;
 		float len = length(dir);
 		dir = normalize(dir);
-		float f_dist = f_JsutCause2(len, currentLightParams[0].LightRange);
-		return currentLightParams[0].LightColor.xyz * currentLightParams[0].LightIntensity * f_dist;
+		float f_dist = f_JsutCause2(len, PointLightArray[0].LightRange);
+		return PointLightArray[0].LightColor.xyz * PointLightArray[0].LightIntensity * f_dist;
 
 	}
 
 	if (type == 2)
 	{
-		dir = worldPos - currentLightParams[0].LightPos.xyz;
+		dir = worldPos - SpotLightArray[0].LightPos.xyz;
 		float len = length(dir);
 		dir = normalize(dir);
 		
-		float f_dist = f_JsutCause2(len, currentLightParams[0].LightRange);
+		float f_dist = f_JsutCause2(len, SpotLightArray[0].LightRange);
 
-		float cos_s = dot(float4(dir, 0.0), float4(currentLightParams[0].LightDirection.xyz,0.0));
-		float cos_u = cos(currentLightParams[0].SpotlightOuterAngles * 3.1415 / 180.0);
-		float cos_p = cos(currentLightParams[0].SpotlightInnerAngles * 3.1415 / 180.0);
+		float cos_s = dot(float4(dir, 0.0), float4(SpotLightArray[0].LightDirection.xyz,0.0));
+		float cos_u = cos(SpotLightArray[0].SpotlightOuterAngles * 3.1415 / 180.0);
+		float cos_p = cos(SpotLightArray[0].SpotlightInnerAngles * 3.1415 / 180.0);
 
 		float t = (cos_s - cos_u) / (cos_p - cos_u);
 		float f_dir_smoothstep = t * t*(3 - 2 * t);
 
-		return currentLightParams[0].LightColor.xyz * currentLightParams[0].LightIntensity * f_dist * f_dir_smoothstep;
+		return SpotLightArray[0].LightColor.xyz * SpotLightArray[0].LightIntensity * f_dist * f_dir_smoothstep;
 	}
 
 	return float3(0, 0, 0);
@@ -118,32 +144,35 @@ float3 LightDirAndColor(inout float3 dir, in float3 worldPos)
 float4 PS(PS_INPUT i) : SV_TARGET
 {
 	//sample rt info
-	float4 rt0 = RT0.Sample(SamLinear, i.uv);
-	float4 rt1 = RT1.Sample(SamLinear, i.uv);
-	float4 rt2 = RT2.Sample(SamLinear, i.uv);
+	float4 rt0 = RT0.Sample(SamLinear0, i.uv);
+	float4 rt1 = RT1.Sample(SamLinear1, i.uv);
+	float4 rt2 = RT2.Sample(SamLinear2, i.uv);
 
 	float metallic = rt0.w;
 	float roughness = rt1.w;
-	float specAO = rt2.w;
+	float specAO = 1.0;
 	float3 wPos = rt0.xyz;
 	float3 wNormal = rt1.xyz;
 	float3 albedo = rt2.xyz;
+	float matMask = rt2.w;
+	wNormal *= matMask;
 
 	//view
 	float3 viewDir = normalize(CameraPos.xyz - wPos);
-
+	
 	//Directional light info
 	float3 lightDir = float3(0, 0, 1);
-	float3 lightCol = LightDirAndColor(lightDir, wPos);
+	float3 lightCol = LightDirAndColor(lightDir, wPos) * matMask;
+	lightDir = -lightDir;
 	float dot_nl = dot(lightDir, wNormal);
 	float dot_nl1 = max(dot_nl, 0);
 	float dot_nv = dot(viewDir, wNormal);
-	float dot_nv1 = max(dot_nv, 0);
+	float dot_nv1 = max(dot_nv, 0.0001);
 	float3 halfDir = normalize(viewDir + lightDir);
 	float dot_nh = dot(wNormal, halfDir);
-	float dot_nh1 = max(dot_nh, 0.0);
+	float dot_nh1 = max(dot_nh, 0.0001);
 	float dot_lh = dot(lightDir, halfDir);
-	float dot_lh1 = max(dot_lh, 0.0);
+	float dot_lh1 = max(dot_lh, 0.0001);
 
 	//disney diffuse 2014
 	float3 diffuseCol = lerp(0.022, albedo, 1 - metallic);
@@ -151,7 +180,8 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float Fl = (FD90 - 1) * pow(1 - dot_nl1, 5);
 	float Fd = (FD90 - 1) * pow(1 - dot_nv1, 5);
 	float3 diffuse = (diffuseCol / 3.1415) * (1 + Fl) * (1 + Fd);
-
+	
+	return float4(wNormal.xyz,1);
 
 	//GTR D: r = 2
 	float r = 2;
@@ -203,7 +233,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 
 	half3 finalCol = L_direct + L_indirect;
 
-	return half4(rt2.xyz,1.0);
+	return half4(finalCol.xyz,1.0);
 
 
 }

@@ -47,4 +47,6 @@ public:
 	bool SetDirLight(DxDevice &dev,DxDirLight &dirLight);
 
 	bool AddDirLight(DxDevice &dev, XMFLOAT4 color, float intensity, XMFLOAT4 dir);
+	bool AddPointLight(DxDevice & dev, XMFLOAT4 color, float intensity, XMFLOAT4 wPos, float range);
+	bool AddPointLight(DxDevice & dev, XMFLOAT4 color, float intensity, XMFLOAT4 dir, XMFLOAT4 wPos, float range, float inner_angle, float outer_angle);
 };

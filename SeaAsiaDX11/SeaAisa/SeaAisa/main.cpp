@@ -62,7 +62,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 	//main loop
 
-	ImVec4 clear_col = ImColor(0, 0, 0);
+	ImVec4 clear_col = ImColor(0, 0, 0,0.0);
 	bool show_test_window = true;
 
 	float horizontalAngle = 0;

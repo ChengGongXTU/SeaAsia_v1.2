@@ -106,7 +106,7 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	dsDesc.CPUAccessFlags = 0;									// how the CPU access the resource, set with "Usage" method
 	dsDesc.MiscFlags = 0;										//Identifies other, less common options for resources.
 																// create buffer and view
-	ID3D11Texture2D* mDepthStencilBuffer = 0;
+	if (mDepthStencilBuffer != NULL) mDepthStencilBuffer->Release(), mDepthStencilBuffer = NULL;
 	HRESULT hr = device->CreateTexture2D(&dsDesc, NULL, &mDepthStencilBuffer);				// get point to depth buffer
 
 	ID3D11DepthStencilState* depthState = NULL;
@@ -141,7 +141,6 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	hr = device->CreateDepthStencilView(mDepthStencilBuffer, &dsDSV, &dsv);  //get a view for depth buffer resource
 																			 // bind RTV and DSV to Output Merge Stage																						// bind render target and depth/stencil view to output merger stage
 	context->OMSetRenderTargets(1, &rtv[0], dsv);
-	mDepthStencilBuffer->Release();
 
 	//set the viewport
 	//D3D11_VIEWPORT vp;
@@ -154,7 +153,7 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	context->RSSetViewports(1, &vp);
 
 	//clear the RTV and DSV
-	float color[4] = { 1.0f,0.0f,0.0f,1.0f };
+	float color[4] = { 0.0f,0.0f,0.0f,0.0f };
 	context->ClearRenderTargetView(rtv[0], color);
 	context->ClearRenderTargetView(rtv[1], color);
 	context->ClearRenderTargetView(rtv[2], color);

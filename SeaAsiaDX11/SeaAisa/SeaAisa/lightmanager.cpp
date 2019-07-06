@@ -183,3 +183,32 @@ bool LightManager::AddDirLight(DxDevice & dev, XMFLOAT4 color, float intensity, 
 
 	return true;
 }
+
+bool LightManager::AddPointLight(DxDevice & dev, XMFLOAT4 color,float intensity, XMFLOAT4 wPos, float range )
+{
+	DxPointLight& pointlight = dxPointLights[endPointLightID];
+	pointlight.Color = color;
+	pointlight.Pos = wPos;
+	pointlight.intensity = intensity;
+	pointlight.range = range;
+
+	CreateBuffer(dev, pointlight);
+
+	return true;
+}
+
+bool LightManager::AddPointLight(DxDevice & dev, XMFLOAT4 color, float intensity, XMFLOAT4 dir, XMFLOAT4 wPos, float range, float inner_angle, float outer_angle)
+{
+	DxSpotLight& spotlight = dxSpotLights[endSpotLightID];
+	spotlight.Color = color;
+	spotlight.Pos = wPos;
+	spotlight.Dir = dir;
+	spotlight.intensity = intensity;
+	spotlight.range = range;
+	spotlight.angle_p = inner_angle;
+	spotlight.angle_u = outer_angle;
+
+	CreateBuffer(dev, spotlight);
+
+	return true;
+}

@@ -115,6 +115,20 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	if (cameraManager.worldjTransformBuffer == NULL) cameraManager.CreateWorldBuffer(basicMng.dxDevice);
 	basicMng.dxDevice.context->UpdateSubresource(cameraManager.worldjTransformBuffer, 0, NULL, &m, 0, 0);
 	basicMng.dxDevice.context->VSSetConstantBuffers(0, 1, &cameraManager.worldjTransformBuffer);
+	
+	XMMATRIX m2 = XMLoadFloat4x4(&unity.wolrdTransform.m.m);
+	m2 = XMMatrixTranspose(XMMatrixInverse(nullptr, m2));
+	ID3D11Buffer* invWorldTrans = NULL;
+	D3D11_BUFFER_DESC mbd;
+	ZeroMemory(&mbd, sizeof(mbd));
+	mbd.Usage = D3D11_USAGE_DEFAULT;
+	mbd.ByteWidth = sizeof(WorldTransform);
+	mbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	mbd.CPUAccessFlags = 0;
+	HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&mbd, NULL, &invWorldTrans);
+	if (FAILED(hr))	return false;
+	basicMng.dxDevice.context->UpdateSubresource(invWorldTrans, 0, NULL, &m2, 0, 0);
+	basicMng.dxDevice.context->VSSetConstantBuffers(3, 1, &invWorldTrans);
 
 	ID3D11Buffer* materialConstant = NULL;
 	D3D11_BUFFER_DESC bd;
@@ -125,7 +139,7 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	bd.StructureByteStride = sizeof(MaterialParameter);
-	HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&bd, NULL, &materialConstant);
+	hr = basicMng.dxDevice.device->CreateBuffer(&bd, NULL, &materialConstant);
 	if (FAILED(hr))	return false;
 
 	ID3D11ShaderResourceView* matParameterSRV = NULL;
@@ -163,6 +177,7 @@ bool LowLevelRendermanager::DeferredDrawGeometry(BasicManager & basicMng, Unity 
 	}
 	if (materialConstant != NULL) materialConstant->Release();
 	if (matParameterSRV != NULL) matParameterSRV->Release();
+	if (invWorldTrans != NULL) invWorldTrans->Release();
 	return true;
 
 }
@@ -209,7 +224,7 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 		HRESULT hr = basicMng.dxDevice.device->CreateBuffer(&cameraBd, NULL, &cameraPosBuffer);
 		if (FAILED(hr))	return false;
 		basicMng.dxDevice.context->UpdateSubresource(cameraPosBuffer, 0, NULL, &xmCameraPos, 0, 0);
-		basicMng.dxDevice.context->VSSetConstantBuffers(1, 1, &cameraPosBuffer);
+		basicMng.dxDevice.context->PSSetConstantBuffers(1, 1, &cameraPosBuffer);
 		if (cameraPosBuffer != NULL) cameraPosBuffer->Release();
 	}
 
@@ -240,23 +255,23 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
 		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
 	}
-
+	
 	for (int i = 0; i < lightManager.endPointLightID; i++)
 	{	
 		basicMng.dxDevice.context->UpdateSubresource(lightManager.PointLightBuffer[i], 0, NULL, &lightManager.dxPointLights[i], 0, 0);
-		basicMng.dxDevice.context->PSSetShaderResources(3, 1, &lightManager.PointLightSRV[i]);
+		basicMng.dxDevice.context->PSSetShaderResources(4, 1, &lightManager.PointLightSRV[i]);
 		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.PointLightType, 0, 0);
 		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
-		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+		//basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
 	}
 
 	for (int i = 0; i < lightManager.endSpotLightID; i++)
 	{	
 		basicMng.dxDevice.context->UpdateSubresource(lightManager.SpotLightBuffer[i], 0, NULL, &lightManager.dxSpotLights[i], 0, 0);
-		basicMng.dxDevice.context->PSSetShaderResources(3, 1, &lightManager.SpotLightSRV[i]);
+		basicMng.dxDevice.context->PSSetShaderResources(5, 1, &lightManager.SpotLightSRV[i]);
 		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.SpotLightType, 0, 0);
 		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
-		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+		//basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
 	}
 	if (lightTypeBuffer != NULL) lightTypeBuffer->Release();
 	return true;
@@ -269,7 +284,7 @@ void LowLevelRendermanager::RenderScene(BasicManager & basicMng, WindowsDevice &
 	/*ResizeRenderpipeline(basicMng, wnDev);*/
 
 	float color[4] = { 0.5f,0.5f,0.5f,1.0f };
-	float black[4] = { 0.0f,0.0f,0.0f,1.0f };
+	float black[4] = { 0.0f,0.0f,0.0f,0.0f };
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], color);
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
 	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
@@ -301,19 +316,19 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 	/*ResizeRenderpipeline(basicMng, wnDev);*/
 
 	float color[4] = { 0.5f,0.5f,0.5f,1.0f };
-	float black[4] = { 0.0f,0.0f,0.0f,1.0f };
+	float black[4] = { 0.0f,0.0f,0.0f,0.0f };
 	float red[4] = { 1.0f,0.0f,0.0f,1.0f };
 	float green[4] = { 0.0f,1.0f,0.0f,1.0f };
 	float blue[4] = { 0.0f,0.0f,1.0f,1.0f };
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], color);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], red);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], green);
-	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[3], blue);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[0], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[1], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[2], black);
+	basicMng.dxDevice.context->ClearRenderTargetView(basicMng.dxDevice.rtv[3], black);
 	basicMng.dxDevice.context->ClearDepthStencilView(basicMng.dxDevice.dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 //------------------------compute G-buffer---------------------------------------------------------------------------
  	//------set 3 G-buffer rtv-----------
-	basicMng.dxDevice.context->OMSetRenderTargets(3, &basicMng.dxDevice.rtv[1], NULL);
+	basicMng.dxDevice.context->OMSetRenderTargets(3, &basicMng.dxDevice.rtv[1], basicMng.dxDevice.dsv);
 	//------bind vs and ps -----------
 	shaderManager.InputVertexShader(basicMng.dxDevice, 0);
 	shaderManager.InputPixelShader(basicMng.dxDevice, 0);
@@ -328,7 +343,24 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 
 //------------------------light shading---------------------------------------------------------------------------
 	//------set first rtv-----------
-	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], basicMng.dxDevice.dsv);
+	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], NULL);
+
+	ID3D11BlendState* pBlendState = NULL;
+	D3D11_BLEND_DESC lightBlendDesc = { 0 };
+	lightBlendDesc.AlphaToCoverageEnable = false;
+	lightBlendDesc.IndependentBlendEnable = false;
+	lightBlendDesc.RenderTarget[0].BlendEnable = true;
+	lightBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	lightBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	lightBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	lightBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	lightBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	lightBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	lightBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	HRESULT hr = basicMng.dxDevice.device->CreateBlendState(&lightBlendDesc, &pBlendState);
+	if (FAILED(hr))	return;
+	float factor[4] = { 1.f,1.f,1.f,1.f };
+	basicMng.dxDevice.context->OMSetBlendState(pBlendState, factor, 0xffffffff);
 
 	shaderManager.InputVertexShader(basicMng.dxDevice, 1);
 	shaderManager.InputPixelShader(basicMng.dxDevice, 1);
@@ -338,13 +370,10 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 		cameraManager.LoadCamera(basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
 		cameraManager.InputCamera(basicMng.dxDevice);
 	}
-	//-------- input light constant--------------
-	if (lightManager.DirLightBuffer != NULL)
-	{
-		lightManager.SetDirLight(basicMng.dxDevice, scene.dlList[scene.currentDlId]);
-	}
-	DeferredDrawSceneLighting(basicMng, SceneId, 0, scene.currentDlId);
 
+	DeferredDrawSceneLighting(basicMng, SceneId, 0, scene.currentDlId);
+	basicMng.dxDevice.context->OMSetBlendState(0, factor, 0xffffffff);
+	if (pBlendState != NULL) pBlendState->Release(), pBlendState = NULL;
 }
 
 
@@ -448,8 +477,9 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		dsDesc.CPUAccessFlags = 0;									// how the CPU access the resource, set with "Usage" method
 		dsDesc.MiscFlags = 0;										//Identifies other, less common options for resources.
 																	// create buffer and view
-		ID3D11Texture2D* mDepthStencilBuffer = 0;
-		HRESULT hr = dxdev.device->CreateTexture2D(&dsDesc, NULL, &mDepthStencilBuffer);				// get point to depth buffer
+		
+		if(dxdev.mDepthStencilBuffer != NULL) dxdev.mDepthStencilBuffer->Release(), dxdev.mDepthStencilBuffer = NULL;
+		HRESULT hr = dxdev.device->CreateTexture2D(&dsDesc, NULL, &dxdev.mDepthStencilBuffer);				// get point to depth buffer
 
 		ID3D11DepthStencilState* depthState = NULL;
 		D3D11_DEPTH_STENCIL_DESC depthDesc;
@@ -480,10 +510,9 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		dsDSV.Format = dsDesc.Format;
 		dsDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsDSV.Texture2D.MipSlice = 0;
-		hr = dxdev.device->CreateDepthStencilView(mDepthStencilBuffer, &dsDSV, &dxdev.dsv);  //get a view for depth buffer resource
+		hr = dxdev.device->CreateDepthStencilView(dxdev.mDepthStencilBuffer, &dsDSV, &dxdev.dsv);  //get a view for depth buffer resource
 																				 // bind RTV and DSV to Output Merge Stage																						// bind render target and depth/stencil view to output merger stage
 		dxdev.context->OMSetRenderTargets(1, &dxdev.rtv[0], dxdev.dsv);
-		mDepthStencilBuffer->Release();
 
 		
 
@@ -713,6 +742,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & 
 	lImporter->Destroy();
 
 	//FbxSystemUnit::km.ConvertScene(pScene);
+	//FbxAxisSystem::DirectX.ConvertScene(pScene);
 	FbxNode* pRootNode = pScene->GetRootNode();
 	//read fbx mesh
 	LoadFbxNode(pRootNode, NULL, -1, scene, basicMng);
@@ -811,6 +841,20 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		globalM.SetIdentity();
 		globalM = pNode->EvaluateGlobalTransform();
 		globalM *= geoM;
+
+		/*
+		FbxMatrix matR;
+		FbxMatrix matS;
+		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 180, 1), FbxVector4(1, 1, 1, 1));
+		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, -1, 1));
+		globalM = matR * matS * globalM *  matS ;
+		*/
+		FbxMatrix matR;
+		FbxMatrix matS;
+		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
+		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));
+		//globalM = matR * matS * globalM *  matS;
+
 		currentUnity->wolrdTransform = currentUnity->transform = Transform(Matrix4x4(globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
 			globalM.Get(1, 0), globalM.Get(1, 1), globalM.Get(1, 2), globalM.Get(1, 3),
 			globalM.Get(2, 0), globalM.Get(2, 1), globalM.Get(2, 2), globalM.Get(2, 3),

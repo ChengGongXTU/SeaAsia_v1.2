@@ -22,6 +22,7 @@ public:
 	ID3D11ShaderResourceView* rtsrv[4];
 	ID3D11SamplerState* rtSampler[4];
 	ID3D11DepthStencilView* dsv;
+	ID3D11Texture2D* mDepthStencilBuffer;
 
 	D3D11_VIEWPORT vp;
 

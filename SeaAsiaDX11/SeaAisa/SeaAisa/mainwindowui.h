@@ -19,12 +19,12 @@ static void ScenenListView(WindowsDevice & winDev ,BasicManager &basicMng, bool 
 static void SceneSettingView(BasicManager &basicMng, bool *p_open);
 static void UnityLoadingView(BasicManager &basicMng, LowLevelRendermanager &renderMng, bool *p_open);
 static void CameraSettingView(BasicManager &basicMng, bool *p_open);
-static void DirectionLightSettingView(BasicManager &basicMng, bool *p_open);
+static void DirectionLightSettingView(BasicManager &basicMng, LowLevelRendermanager &renderMng,bool *p_open);
 static void PointLightSettingView(BasicManager &basicMng, bool *p_open);
 static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, bool *p_open);
 static void CameraCangeView(BasicManager &basicMng, bool *p_open);
 static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& renderMng,bool *p_open);
-static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng);
+static void SceneHierarchy(bool* p_open, BasicManager &basicMng);
 static void ShowTextureResource(bool* p_open, BasicManager &basicMng);
 static void ShowObjectResource(bool* p_open, BasicManager &basicMng);
 static void ShowMaterialResource(bool* p_open, BasicManager &basicMng);

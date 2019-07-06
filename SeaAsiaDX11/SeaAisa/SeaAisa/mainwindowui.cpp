@@ -10,7 +10,7 @@ static bool show_direction_light_setting_view = false;
 static bool show_render_setting_view = true;
 static bool show_camera_change_view = false;
 static bool show_materila_change_view = false;
-static bool Show_Example_App_Property_Editor = true;
+static bool Show_Scene_Hierarchy = true;
 static bool Show_Texture_Resource = false;
 static bool Show_Object_Resource = false;
 static bool Show_Material_Resource = false;
@@ -24,7 +24,7 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 	if (show_scene_resource_view)	ScenenResourceView(winDev, basicMng, renderMng, &show_scene_resource_view);
 	//if (show_resource_list_view)	ResourceListView(winDev, basicMng, &show_resource_list_view);
 	if (show_render_setting_view) RenderSettingView(winDev, basicMng, renderMng, &show_render_setting_view);
-	if (Show_Example_App_Property_Editor) ShowExampleAppPropertyEditor(&Show_Example_App_Property_Editor, basicMng);
+	if (Show_Scene_Hierarchy) SceneHierarchy(&Show_Scene_Hierarchy, basicMng);
 	if (Show_Texture_Resource) ShowTextureResource(&Show_Texture_Resource, basicMng);
 	if (Show_Object_Resource) ShowObjectResource(&Show_Object_Resource, basicMng);
 	if (Show_Material_Resource) ShowMaterialResource(&Show_Material_Resource, basicMng);
@@ -117,6 +117,12 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 				ImGui::EndMenu();
 			}
 
+			if (ImGui::BeginMenu("Scene Hierarchy View"))
+			{
+				if (ImGui::MenuItem("Show the View", NULL, &Show_Scene_Hierarchy));
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -154,7 +160,7 @@ static void ScenenResourceView(WindowsDevice & winDev, BasicManager &basicMng, L
 	if (show_scene_setting_view) SceneSettingView(basicMng, &show_scene_setting_view);
 	if (show_unity_load_view)	UnityLoadingView(basicMng, renderMng, &show_unity_load_view);
 	if (show_camera_setting_view) CameraSettingView(basicMng, &show_camera_setting_view);
-	if (show_direction_light_setting_view) DirectionLightSettingView(basicMng, &show_direction_light_setting_view);
+	if (show_direction_light_setting_view) DirectionLightSettingView(basicMng, renderMng, &show_direction_light_setting_view);
 	if (show_point_light_setting_view)	PointLightSettingView(basicMng, &show_point_light_setting_view);
 	if (show_camera_change_view)	CameraCangeView(basicMng, &show_camera_change_view);
 	if (show_materila_change_view)	MaterialChangeView(basicMng, renderMng, &show_materila_change_view);
@@ -769,7 +775,7 @@ static void CameraCangeView(BasicManager &basicMng, bool *p_open)
 	ImGui::End();
 }
 
-static void DirectionLightSettingView(BasicManager &basicMng, bool *p_open)
+static void DirectionLightSettingView(BasicManager &basicMng, LowLevelRendermanager &renderMng,bool *p_open)
 {
 	ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiSetCond_FirstUseEver);
 	if (!ImGui::Begin("Direction Light Setting", p_open))
@@ -778,8 +784,9 @@ static void DirectionLightSettingView(BasicManager &basicMng, bool *p_open)
 		return;
 	}
 
-	static float dir[3] = { 5.f,5.f,5.f };
+	static float dir[3] = { 0.707f,-0.707f,0.f };
 	static float color[3] = { 1.f,1.f,1.f };
+	static float intensity = 1;
 
 	if (dir[0] == 0.f && dir[1] == 0.f && dir[2] == 0.f)	dir[0] = dir[1] = dir[2] = 1.f;
 	ImGui::InputFloat3("Light Direction", dir);
@@ -791,14 +798,7 @@ static void DirectionLightSettingView(BasicManager &basicMng, bool *p_open)
 
 	if (ImGui::Button("OK", ImVec2(-1, 20)))
 	{
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].currentDlId = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId;
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].dlList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId].Dir.x = dir[0];
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].dlList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId].Dir.y = dir[1];
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].dlList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId].Dir.z = dir[2];
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].dlList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId].Color.x = color[0];
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].dlList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId].Color.y = color[1];
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].dlList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId].Color.z = color[2];
-		basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endDlId++;
+		renderMng.lightManager.AddDirLight(basicMng.dxDevice, XMFLOAT4(color[0], color[1], color[2], 1.0), intensity, XMFLOAT4(dir[0], dir[1], dir[2], 0.0));
 		show_direction_light_setting_view = false;
 	}
 
@@ -1013,6 +1013,7 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 
 	}
 
+	/*
 	if (ImGui::CollapsingHeader("Light input"))
 	{
 
@@ -1041,6 +1042,7 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 			}
 		}
 	}
+	*/
 
 	//vewiport 
 	static float vppos[2] = { 0.f,0.f };
@@ -1071,115 +1073,13 @@ static void RenderSettingView(WindowsDevice & winDev, BasicManager &basicMng, Lo
 
 static void MaterialChangeView(BasicManager &basicMng, LowLevelRendermanager& renderMng, bool *p_open)
 {	
-	/*
-	Unity& unity = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].unityList[basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].currentUnityId];
-	MaterialParameter &currentPara = basicMng.materialsManager.dxMaterial[basicMng.materialsManager.currentMtlId].parameter;
 
-	static float ka[3] = { 0,0,0 };
-	static float kd[3] = { 0,0,0 };
-	static float ks[3] = { 0,0,0 };
-	static float ke[3] = { 0,0,0 };
-	static float alpha = 1.f;
-	static float illum = 1.f;
-	static float Ni = 0.f;
-	static int Ns = 1;
-
-	ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiSetCond_FirstUseEver);
-	if (!ImGui::Begin("Materila Parameter", p_open, ImGuiWindowFlags_MenuBar))
-	{
-		ImGui::End();
-	}
-
-	// left
-	ImGui::BeginChild("maeterila number", ImVec2(150, 0), true);
-	for (int i = 0; i < unity.materialNum; i++)
-	{
-		char label[128];
-		sprintf_s(label, "Material %d", i);
-		if (ImGui::Selectable(label))
-			basicMng.materialsManager.currentMtlId = unity.MaterialsIdIndex[i];
-	}
-	ImGui::EndChild();
-	ImGui::SameLine();
-
-	// right
-	ImGui::BeginGroup();
-
-	ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing())); // Leave room for 1 line below us
-	ImGui::Text("material: %d", basicMng.materialsManager.currentMtlId);
-	ImGui::Separator();
-	
-	ImGui::Text("Current Materila Ka: %f %f %f", currentPara.Ka.x, currentPara.Ka.y, currentPara.Ka.z);
-	ImGui::InputFloat3("Ka:", ka);
-	ImGui::Text("Current Materila Kd: %f %f %f", currentPara.Kd.x, currentPara.Kd.y, currentPara.Kd.z);
-	ImGui::InputFloat3("Kd:", kd);
-	ImGui::Text("Current Materila Ks: %f %f %f", currentPara.Ks.x, currentPara.Ks.y, currentPara.Ks.z);
-	ImGui::InputFloat3("Ks:", ks);
-	ImGui::Text("Current Materila Ke: %f %f %f", currentPara.Ke.x, currentPara.Ke.y, currentPara.Ke.z);
-	ImGui::InputFloat3("Ke:", ke);
-	
-	ImGui::Text("Current Materila alpha: %f", currentPara.alpha);
-	if (alpha < 0.f)	alpha = 0.f;
-	ImGui::InputFloat("alpha:", &alpha);
-
-	ImGui::Text("Current Materila Ni: %f", currentPara.Ni);
-	if (Ni < 0.f)	Ni = 0.f;
-	ImGui::InputFloat("Ni:", &Ni);
-
-	ImGui::Text("Current Materila illum: %f", currentPara.illum);
-	if (illum < 0.f)illum = 0.f;
-	ImGui::InputFloat("illum:", &illum);
-
-	ImGui::Text("Current Materila Ns: %d", currentPara.Ns);
-	if (Ns < 1)	Ns = 1;
-	ImGui::InputInt("Ns:", &Ns);
-	ImGui::EndChild();
-
-	static int mtlType = 0;
-	ImGui::Combo("Object type", &mtlType, "matte\0phong\0emissive\0\0");
-	
-	ImGui::BeginChild("buttons");
-
-	if (ImGui::Button("Set Defeat"))
-	{
-		ka[0] = currentPara.Ka.x; ka[1] = currentPara.Ka.y; ka[2] = currentPara.Ka.z;
-		kd[0] = currentPara.Kd.x; kd[1] = currentPara.Kd.y; kd[2] = currentPara.Kd.z;
-		ks[0] = currentPara.Ks.x; ks[1] = currentPara.Ks.y; ks[2] = currentPara.Ks.z;
-		ke[0] = currentPara.Ke.x; ke[1] = currentPara.Ke.y; ke[2] = currentPara.Ke.z;
-		alpha = currentPara.alpha;
-		illum = currentPara.illum;
-		Ni = currentPara.Ni;
-		Ns = currentPara.Ns;
-		mtlType = basicMng.materialsManager.dxMaterial[basicMng.materialsManager.currentMtlId].mtlType;
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("OK"))
-	{
-		MaterialParameter para;
-		para.Ka = XMFLOAT4(ka[0], ka[1], ka[2], 1.f);
-		para.Kd = XMFLOAT4(kd[0], kd[1], kd[2], 1.f);
-		para.Ks = XMFLOAT4(ks[0], ks[1], ks[2], 1.f);
-		para.Ke = XMFLOAT4(ke[0], ke[1], ke[2], 1.f);
-		para.alpha = alpha;
-		para.illum = illum;
-		para.Ni = Ni;
-		para.Ns = Ns;
-		renderMng.RenderMaterialChange(basicMng, basicMng.materialsManager.currentMtlId, para, mtlType);
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Exit")) { show_materila_change_view = false; }
-	ImGui::EndChild();
-
-	ImGui::EndGroup();
-
-	ImGui::End();
-	*/
 }
 
-static void ShowExampleAppPropertyEditor(bool* p_open, BasicManager &basicMng)
+static void SceneHierarchy(bool* p_open, BasicManager &basicMng)
 {
 	ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiSetCond_FirstUseEver);
-	if (!ImGui::Begin("Example: Property editor", p_open))
+	if (!ImGui::Begin("Scene Hierarchy", p_open))
 	{
 		ImGui::End();
 		return;
