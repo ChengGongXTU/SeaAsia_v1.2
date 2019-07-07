@@ -149,16 +149,16 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float4 rt2 = RT2.Sample(SamLinear2, i.uv);
 
 	float metallic = rt0.w;
-	float roughness = rt1.w;
+	float roughness = max(rt1.w, 0.05);
 	float specAO = 1.0;
 	float3 wPos = rt0.xyz;
-	float3 wNormal = rt1.xyz;
+	float3 wNormal = 2 * rt1.xyz - float3(1,1,1);
 	float3 albedo = rt2.xyz;
 	float matMask = rt2.w;
 	wNormal *= matMask;
 
 	//view
-	float3 viewDir = normalize(CameraPos.xyz - wPos);
+	float3 viewDir = normalize(CameraPos.xyz - wPos)* matMask;
 	
 	//Directional light info
 	float3 lightDir = float3(0, 0, 1);
@@ -168,56 +168,74 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float dot_nl1 = max(dot_nl, 0);
 	float dot_nv = dot(viewDir, wNormal);
 	float dot_nv1 = max(dot_nv, 0.0001);
-	float3 halfDir = normalize(viewDir + lightDir);
+	float3 halfDir = normalize(viewDir + lightDir) * matMask;
 	float dot_nh = dot(wNormal, halfDir);
 	float dot_nh1 = max(dot_nh, 0.0001);
 	float dot_lh = dot(lightDir, halfDir);
 	float dot_lh1 = max(dot_lh, 0.0001);
 
-	//disney diffuse 2014
+	
+	//disney diffuse 2012:
 	float3 diffuseCol = lerp(0.022, albedo, 1 - metallic);
-	float FD90 = 0.5 + 2 * roughness * dot_lh1 * dot_lh1;
-	float Fl = (FD90 - 1) * pow(1 - dot_nl1, 5);
-	float Fd = (FD90 - 1) * pow(1 - dot_nv1, 5);
+	float FD90 = 0.5 + 2 * roughness * dot_lh * dot_lh;
+	float Fl = (FD90 - 1) * pow(1 - dot_nl, 5);
+	float Fd = (FD90 - 1) * pow(1 - dot_nv, 5);
 	float3 diffuse = (diffuseCol / 3.1415) * (1 + Fl) * (1 + Fd);
 	
-	return float4(wNormal.xyz,1);
-
-	//GTR D: r = 2
-	float r = 2;
+	/*
+	//GTR D: metal and anisotropic r = 2 , non_metal and isotropic r = 1
 	float a = roughness * roughness;
 	float a2 = a * a;
-	float k = 0;
-	if (a == 1)
-	{
-		k = 1;
-	}
-	else
-	{
-		k = (a2 - 1) * (r - 1) / (1 - pow(a2, 1 - r));
-	}
-	float D = k / pow(3.1415 * (1 + dot_nh1 * dot_nh1 * (a2 - 1)), r);
+
+	float r_metal = 2;
+	float c_metal = (r_metal - 1) * (a2 - 1) / (1 - pow(a2, 1 - r_metal));
+	float D_metal = c_metal / pow(3.1415 * (1 + dot_nh * dot_nh * (a2 - 1)), r_metal);
+
+	float r_nonmetal = 1;
+	float c_nonmetal = (a2 - 1) / log(a2);
+	float D_nonmetal = c_nonmetal / (3.1415 * (1 + dot_nh * dot_nh * (a2 - 1)));
+
+	float D = lerp(D_nonmetal, D_metal, metallic);
 
 	//F schlick:
 	float3 F0 = lerp(0.02, albedo, metallic);
-	float3 F = F0 + (1 - F0) * pow(1 - dot_lh1, 5);
+	float3 F = F0 + (1 - F0) * pow(1 - dot_lh, 5);
 
 	//G2: GGX by Walter 
 	float ag = pow(0.5 + roughness * 0.5, 2);
 	float ag2 = ag * ag;
-	float Gl = 2 * dot_nl1 / (dot_nl1 + sqrt(ag2 + (1 - ag2) * pow(dot_nl1, 2)));
-	float Gv = 2 * dot_nv1 / (dot_nv1 + sqrt(ag2 + (1 - ag2) * pow(dot_nv1, 2)));
+	float Gl = 2 * dot_nl / (dot_nl1 + sqrt(ag2 + (1 - ag2) * pow(dot_nl, 2)));
+	float Gv = 2 * dot_nv / (dot_nv1 + sqrt(ag2 + (1 - ag2) * pow(dot_nv, 2)));
 	float G2 = Gl * Gv;
+	*/
 
-	//specular: 
+	//unreal pbr specular :
+	//F schlick:
+	float3 F0 = lerp(0.02, albedo, metallic);
+	float3 F = F0 + (1 - F0) * pow(1 - dot_lh, 5);
+	
+	//GGX DNF:
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float D = a2 / (3.1415 * pow(dot_nh * dot_nh * (a2 - 1) + 1, 2));
+
+	//GGX Geometry
+	float k = pow(roughness + 1, 2) / 8;
+	float Gv = dot_nv1 / (dot_nv1 * (1 - k) + k);
+	float Gl = dot_nl1 / (dot_nl1 * (1 - k) + k);
+	float G2 = max(Gv,0.0) * max(Gl, 0.0);
+
 	float3 specular = D * G2 * F / (4 * dot_nl1 * dot_nv1);
 
 	//f(l,v)
+	diffuse = max(diffuse, 0.0);
+	specular = max(specular, 0.0);
 	float3 f_lv = diffuse + specular * specAO;
 
 	//direct illumination
 	float3 L_direct = f_lv * dot_nl1 * lightCol;
-	
+	L_direct = min(L_direct, 10000);
+
 	//IBL£º OP2 approx publish in siggraph 2013
 	half4 c0 = half4( -1.0, -0.0275, -0.572, 0.022);
 	half4 c1 = half4( 1.0, 0.0425, 1.04, -0.04);

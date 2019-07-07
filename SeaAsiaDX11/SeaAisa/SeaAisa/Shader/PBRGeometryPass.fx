@@ -82,7 +82,7 @@ PS_INPUT VS(VS_INPUT v)
 	o.pos = mul(wPos, mView);
 	o.pos = mul(o.pos, mProjection);
 	//float3 wNormal = normalize(mul(transpose((float3x3)mWorld),v.normal));
-	float3 wNormal = mul((float3x3)mWorldforNormal, v.normal);
+	float3 wNormal = mul((float3x3)mWorldforNormal,v.normal);
 	float3 wTangent = normalize(mul(v.tangent, (float3x3)mWorld));
 	float3 wBiNormal = normalize(cross(wNormal, wTangent));
 	o.t2w0 = float4(wTangent.x, wBiNormal.x, wNormal.x, wPos.x);
@@ -110,7 +110,7 @@ PSOutput PS(PS_INPUT i)
 	wNormal.y = dot(i.t2w1.xyz, tNormal.xyz);
 	wNormal.z = dot(i.t2w2.xyz, tNormal.xyz);
 	wNormal.xyz = normalize(wNormal.xyz);
-	output.RT1.xyz = wNormal.xyz;
+	output.RT1.xyz = (wNormal.xyz + float3(1,1,1))*0.5;
 	output.RT1.w =  mra.y * currentMaterialParameter[0]._RoughnessFactor;
 
 	//rt2

@@ -842,18 +842,11 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		globalM = pNode->EvaluateGlobalTransform();
 		globalM *= geoM;
 
-		/*
-		FbxMatrix matR;
-		FbxMatrix matS;
-		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 180, 1), FbxVector4(1, 1, 1, 1));
-		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, -1, 1));
-		globalM = matR * matS * globalM *  matS ;
-		*/
 		FbxMatrix matR;
 		FbxMatrix matS;
 		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
 		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));
-		//globalM = matR * matS * globalM *  matS;
+		globalM = matR * matS * globalM *  matS;
 
 		currentUnity->wolrdTransform = currentUnity->transform = Transform(Matrix4x4(globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
 			globalM.Get(1, 0), globalM.Get(1, 1), globalM.Get(1, 2), globalM.Get(1, 3),

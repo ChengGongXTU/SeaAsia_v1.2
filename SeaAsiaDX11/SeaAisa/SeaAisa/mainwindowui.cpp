@@ -795,6 +795,7 @@ static void DirectionLightSettingView(BasicManager &basicMng, LowLevelRendermana
 		if (color[i] < 0.f)	color[i] = 1.f;
 	}
 	ImGui::InputFloat3("Light Color", color);
+	ImGui::InputFloat("Light Intensity", &intensity);
 
 	if (ImGui::Button("OK", ImVec2(-1, 20)))
 	{
