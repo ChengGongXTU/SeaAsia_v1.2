@@ -271,7 +271,7 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 		basicMng.dxDevice.context->PSSetShaderResources(5, 1, &lightManager.SpotLightSRV[i]);
 		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.SpotLightType, 0, 0);
 		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
-		//basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
 	}
 	if (lightTypeBuffer != NULL) lightTypeBuffer->Release();
 	return true;
@@ -1691,6 +1691,14 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 	FbxVector4 spl_position;
 	FbxVector4 spl_dir;
 
+	FbxVector4 translate1;
+	FbxVector4 rotate1;
+	FbxVector4 scale1;
+	FbxMatrix geoM;
+	FbxMatrix globalM;
+	FbxMatrix matR;
+	FbxMatrix matS;
+
 	switch (type)
 	{
 	case fbxsdk::FbxLight::ePoint:
@@ -1701,11 +1709,14 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 
 		pointlight.Color = XMFLOAT4(pl_color.mData[0], pl_color.mData[1], pl_color.mData[2], 1);
 		pointlight.intensity = pl_intensity / 100.0;
-		pointlight.range = pl_range;
+		pointlight.range = pl_range /100.0;
 
-		 pl_wolrdM = pNode->EvaluateGlobalTransform();
+		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
+		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));
+		globalM = matR * matS * globalM *  matS;
+
 		 position = FbxVector4(0, 0, 0, 1);
-		 pl_position = pl_wolrdM.MultT(position);
+		 pl_position = globalM.MultNormalize(position);
 		pointlight.Pos = XMFLOAT4(pl_position.mData[0] / pl_position.mData[3], pl_position.mData[1] / pl_position.mData[3], pl_position.mData[2] / pl_position.mData[3], 1);
 
 		lightManager.CreateBuffer(basicMng.dxDevice, pointlight);
@@ -1718,9 +1729,26 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 		dirlight.Color = XMFLOAT4(dl_color.mData[0], dl_color.mData[1], dl_color.mData[2], 1);
 		dirlight.intensity = dl_intensity / 100.0;
 
-		dl_wolrdM = pNode->EvaluateGlobalTransform();
-		dir = FbxVector4(0, 0, 1, 0);
-		dl_dir = dl_wolrdM.MultT(dir);
+		//geometry transform
+		 translate1 = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+		 rotate1 = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+		 scale1 = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+
+		geoM.SetIdentity();
+		geoM.SetTRS(translate1, rotate1, scale1);
+
+		//global transform
+		globalM.SetIdentity();
+		globalM = pNode->EvaluateGlobalTransform();
+		globalM *= geoM;
+
+		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
+		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));
+		globalM = matR * matS * globalM *  matS;
+
+		dl_dir = FbxVector4(0, -1, 0, 1);
+		dl_dir = globalM.MultNormalize(dl_dir);
+		dl_dir.Normalize();
 		dirlight.Dir = XMFLOAT4(dl_dir.mData[0], dl_dir.mData[1], dl_dir.mData[2], dl_dir.mData[3]);
 
 		lightManager.CreateBuffer(basicMng.dxDevice, dirlight);
@@ -1733,17 +1761,36 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 
 		spotlight.Color = XMFLOAT4(spl_color.mData[0], spl_color.mData[1], spl_color.mData[2], 1);
 		spotlight.intensity = spl_intensity / 100.0;
-		spotlight.range = spl_range;
+		spotlight.range = spl_range / 100.0;
 		spotlight.angle_u = pLight->InnerAngle.Get();
 		spotlight.angle_u = pLight->OuterAngle.Get();
 
-		spl_wolrdM = pNode->EvaluateGlobalTransform();
+		//geometry transform
+		 translate1 = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+		 rotate1 = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+		 scale1 = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+		 
+		geoM.SetIdentity();
+		geoM.SetTRS(translate1, rotate1, scale1);
+
+		//global transform
+		globalM.SetIdentity();
+		globalM = pNode->EvaluateGlobalTransform();
+		globalM *= geoM;
+
+		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
+		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));
+		globalM = matR * matS * globalM *  matS;
+
 		spl_position = FbxVector4(0, 0, 0, 1);
-		spl_position = spl_wolrdM.MultT(spl_position);
+		spl_position = globalM.MultNormalize(spl_position);
 		spotlight.Pos = XMFLOAT4(spl_position.mData[0] / spl_position.mData[3], spl_position.mData[1] / spl_position.mData[3], spl_position.mData[2] / spl_position.mData[3], 1);
 
-		spl_dir = FbxVector4(0, 0, 1, 0);
-		spl_dir = dl_wolrdM.MultT(spl_dir);
+		spl_dir = FbxVector4(0, -1, 0, 1);
+		globalM.SetTRS(FbxVector4(0, 0, 0, 1), pNode->EvaluateGlobalTransform().GetR(), FbxVector4(1, 1, 1, 1));
+		globalM = matR * matS * globalM *  matS;
+		spl_dir = globalM.MultNormalize(spl_dir);
+		spl_dir.Normalize();
 		spotlight.Dir = XMFLOAT4(spl_dir.mData[0], spl_dir.mData[1], spl_dir.mData[2], spl_dir.mData[3]);
 
 		lightManager.CreateBuffer(basicMng.dxDevice, spotlight);

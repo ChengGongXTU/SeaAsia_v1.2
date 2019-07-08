@@ -67,6 +67,8 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	device->CreateTexture2D(&textureDesc, NULL, &rtt[2]);
 	device->CreateTexture2D(&textureDesc, NULL, &rtt[3]);
 
+
+
 	rtv[0] = rtv[1] = rtv[2] = rtv[3] = 0;
 
 	ID3D11Texture2D* backbuffer;

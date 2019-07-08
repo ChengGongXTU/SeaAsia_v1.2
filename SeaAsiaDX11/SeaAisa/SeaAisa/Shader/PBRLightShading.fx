@@ -174,7 +174,6 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float dot_lh = dot(lightDir, halfDir);
 	float dot_lh1 = max(dot_lh, 0.0001);
 
-	
 	//disney diffuse 2012:
 	float3 diffuseCol = lerp(0.022, albedo, 1 - metallic);
 	float FD90 = 0.5 + 2 * roughness * dot_lh * dot_lh;
