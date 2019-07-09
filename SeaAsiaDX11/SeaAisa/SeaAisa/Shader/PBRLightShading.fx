@@ -126,7 +126,6 @@ float3 LightDirAndColor(inout float3 dir, in float3 worldPos)
 		dir = normalize(dir);
 		
 		float f_dist = f_JsutCause2(len, SpotLightArray[0].LightRange);
-
 		float cos_s = dot(float4(dir, 0.0), float4(SpotLightArray[0].LightDirection.xyz,0.0));
 		float cos_u = cos(SpotLightArray[0].SpotlightOuterAngles * 3.1415 / 180.0);
 		float cos_p = cos(SpotLightArray[0].SpotlightInnerAngles * 3.1415 / 180.0);
@@ -152,7 +151,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float roughness = max(rt1.w, 0.05);
 	float specAO = 1.0;
 	float3 wPos = rt0.xyz;
-	float3 wNormal = 2 * rt1.xyz - float3(1,1,1);
+	float3 wNormal = normalize(2 * rt1.xyz - float3(1,1,1));
 	float3 albedo = rt2.xyz;
 	float matMask = rt2.w;
 	wNormal *= matMask;
@@ -162,7 +161,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	
 	//Directional light info
 	float3 lightDir = float3(0, 0, 1);
-	float3 lightCol = LightDirAndColor(lightDir, wPos) * matMask;
+	float3 lightCol = clamp(LightDirAndColor(lightDir, wPos) * matMask, 0.0, 10000);
 	lightDir = -lightDir;
 	float dot_nl = dot(lightDir, wNormal);
 	float dot_nl1 = max(dot_nl, 0);
@@ -174,13 +173,15 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float dot_lh = dot(lightDir, halfDir);
 	float dot_lh1 = max(dot_lh, 0.0001);
 
+
+
 	//disney diffuse 2012:
 	float3 diffuseCol = lerp(0.022, albedo, 1 - metallic);
 	float FD90 = 0.5 + 2 * roughness * dot_lh * dot_lh;
 	float Fl = (FD90 - 1) * pow(1 - dot_nl, 5);
 	float Fd = (FD90 - 1) * pow(1 - dot_nv, 5);
 	float3 diffuse = (diffuseCol / 3.1415) * (1 + Fl) * (1 + Fd);
-	
+
 	/*
 	//GTR D: metal and anisotropic r = 2 , non_metal and isotropic r = 1
 	float a = roughness * roughness;

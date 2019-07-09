@@ -56,16 +56,20 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	textureDesc.Height = Dev.h;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
 
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	device->CreateTexture2D(&textureDesc, NULL, &rtt[1]);
+
+	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	device->CreateTexture2D(&textureDesc, NULL, &rtt[2]);
 	device->CreateTexture2D(&textureDesc, NULL, &rtt[3]);
+
+
 
 
 
@@ -84,11 +88,15 @@ bool DxDevice::Init(WindowsDevice &Dev)
 	device->CreateRenderTargetView(rtt[3], 0, &rtv[3]);				// use backbufer as render target
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-	shaderResourceViewDesc.Format = textureDesc.Format;
+
 	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	shaderResourceViewDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	device->CreateShaderResourceView(rtt[1], &shaderResourceViewDesc, &rtsrv[1]);
+
+	shaderResourceViewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	device->CreateShaderResourceView(rtt[2], &shaderResourceViewDesc, &rtsrv[2]);
 	device->CreateShaderResourceView(rtt[3], &shaderResourceViewDesc, &rtsrv[3]);
 

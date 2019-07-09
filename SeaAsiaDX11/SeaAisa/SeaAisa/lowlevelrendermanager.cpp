@@ -411,14 +411,17 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		textureDesc.Height = h;
 		textureDesc.MipLevels = 1;
 		textureDesc.ArraySize = 1;
-		textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
 		textureDesc.SampleDesc.Count = 1;
 		textureDesc.Usage = D3D11_USAGE_DEFAULT;
 		textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 		textureDesc.CPUAccessFlags = 0;
 		textureDesc.MiscFlags = 0;
 
+		textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[1]);
+
+		textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[2]);
 		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[3]);
 
@@ -432,11 +435,14 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[3], 0, &basicMng.dxDevice.rtv[3]);				// use backbufer as render target
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-		shaderResourceViewDesc.Format = textureDesc.Format;
 		shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
 		shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+		shaderResourceViewDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[1], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[1]);
+
+		shaderResourceViewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[2], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[2]);
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[3], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[3]);
 
@@ -741,7 +747,7 @@ bool LowLevelRendermanager::LoadUnityFromFBXFile(const char* fbxName, DxScene & 
 	lStatus = lImporter->Import(pScene);
 	lImporter->Destroy();
 
-	//FbxSystemUnit::km.ConvertScene(pScene);
+	FbxSystemUnit::m.ConvertScene(pScene);
 	//FbxAxisSystem::DirectX.ConvertScene(pScene);
 	FbxNode* pRootNode = pScene->GetRootNode();
 	//read fbx mesh
@@ -1705,7 +1711,7 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 
 		pl_color = pLight->Color.Get();
 		 pl_intensity = pLight->Intensity.Get();
-		 pl_range = pLight->FarAttenuationEnd.Get();
+		 pl_range = pLight->FarAttenuationEnd.Get()* 2.54;
 
 		pointlight.Color = XMFLOAT4(pl_color.mData[0], pl_color.mData[1], pl_color.mData[2], 1);
 		pointlight.intensity = pl_intensity / 100.0;
@@ -1757,7 +1763,7 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 		spotlight = lightManager.dxSpotLights[lightManager.endSpotLightID];
 		spl_color = pLight->Color.Get();
 		spl_intensity = pLight->Intensity.Get();
-		spl_range = pLight->FarAttenuationEnd.Get();
+		spl_range = pLight->FarAttenuationEnd.Get() * 2.54;
 
 		spotlight.Color = XMFLOAT4(spl_color.mData[0], spl_color.mData[1], spl_color.mData[2], 1);
 		spotlight.intensity = spl_intensity / 100.0;
