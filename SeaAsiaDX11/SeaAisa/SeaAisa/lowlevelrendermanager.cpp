@@ -236,6 +236,10 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 	basicMng.dxDevice.context->PSSetShaderResources(2, 1, &basicMng.dxDevice.rtsrv[3]);
 	basicMng.dxDevice.context->PSSetSamplers(2, 1, &basicMng.dxDevice.rtSampler[3]);
 
+	//IBL
+	basicMng.dxDevice.context->PSSetShaderResources(6, 1, &basicMng.textureManager.cubemapSRVs[0]);
+	basicMng.dxDevice.context->PSSetSamplers(3, 1, &basicMng.textureManager.cubemapSampleStatePointer[0]);
+
 	//light shading
 	ID3D11Buffer* lightTypeBuffer = NULL;
 	D3D11_BUFFER_DESC lightBd;
@@ -262,7 +266,7 @@ bool LowLevelRendermanager::DeferredDrawSceneLighting(BasicManager & basicMng, i
 		basicMng.dxDevice.context->PSSetShaderResources(4, 1, &lightManager.PointLightSRV[i]);
 		basicMng.dxDevice.context->UpdateSubresource(lightTypeBuffer, 0, NULL, &lightManager.PointLightType, 0, 0);
 		basicMng.dxDevice.context->PSSetConstantBuffers(0, 1, &lightTypeBuffer);
-		//basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
+		basicMng.dxDevice.context->DrawIndexed(6, 0, 0);
 	}
 
 	for (int i = 0; i < lightManager.endSpotLightID; i++)
@@ -1716,6 +1720,20 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 		pointlight.Color = XMFLOAT4(pl_color.mData[0], pl_color.mData[1], pl_color.mData[2], 1);
 		pointlight.intensity = pl_intensity / 100.0;
 		pointlight.range = pl_range /100.0;
+
+
+		//geometry transform
+		translate1 = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+		rotate1 = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+		scale1 = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+
+		geoM.SetIdentity();
+		geoM.SetTRS(translate1, rotate1, scale1);
+
+		//global transform
+		globalM.SetIdentity();
+		globalM = pNode->EvaluateGlobalTransform();
+		globalM *= geoM;
 
 		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
 		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));

@@ -17,6 +17,14 @@ public:
 	ID3D11Texture2D** dxTexure2D;
 	const char** texNames;
 
+
+	ID3D11ShaderResourceView** cubemapSRVs;
+	D3D11_SAMPLER_DESC* cubemapSampDesc;
+	ID3D11SamplerState** cubemapSampleStatePointer;
+	uint32_t** cubemapTextures;
+	ID3D11Texture2D** dxCubemapTexture2D;
+	const char** cubemapNames;
+
 	int totalTexureNumber;
 	int endTextureId;
 	int currentTextureId;
@@ -28,6 +36,12 @@ public:
 	int totalSamplerSateNumber;
 	int endSamplerStateId;
 	int currentSamplerStateId;
+
+	int totalCubemapNumber;
+	int endCubemapTexId;
+	int endCubemapId;
+	int currentCubemapTexId;
+
 
 	TextureManager() {}
 
@@ -51,4 +65,8 @@ public:
 		FLOAT mipLodBias);
 	bool LoadDefeatImage(DxDevice & dxDev);
 	bool DxSetSamplerState(int &samplerDescId, DxDevice &dxDevice);
+
+	bool DxSetCubeSamplerState(D3D11_FILTER filterType, D3D11_TEXTURE_ADDRESS_MODE adddU, D3D11_TEXTURE_ADDRESS_MODE adddV, D3D11_TEXTURE_ADDRESS_MODE adddW, D3D11_COMPARISON_FUNC comparType, FLOAT minLod, FLOAT maxLod, UINT maxAni, DxDevice &dxDevice);
+
+	bool DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev);
 };

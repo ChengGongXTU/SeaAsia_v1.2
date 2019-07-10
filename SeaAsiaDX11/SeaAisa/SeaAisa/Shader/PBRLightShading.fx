@@ -7,15 +7,7 @@ SamplerState SamLinear0 : register(s0);
 SamplerState SamLinear1 : register(s1);
 SamplerState SamLinear2 : register(s2);
 
-//ibl
-TextureCube iblCubeMap;
 
-SamplerState iblSamLinear
-{
-	Filter = MIN_MAG_MIP_LINEAR;
-	AddressU = Wrap;
-	AddressV = Wrap;
-};
 
 // Constants
 struct DirLight
@@ -55,6 +47,10 @@ struct SpotLight
 };
 
 StructuredBuffer<SpotLight> SpotLightArray : register(t5);
+
+//ibl
+TextureCube iblCubeMap : register(t6);
+SamplerState iblSamLinear : register(s3);
 
 cbuffer LightType : register(b0)
 {	
