@@ -187,7 +187,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		{
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
-			FreeImage_GetPixelColor(cubeImg, x + cubeW * 2, y + cubeH, &color);
+			FreeImage_GetPixelColor(cubeImg, x + cubeW * 2, cubeH * 2 - y - 1, &color);
 			tex0[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -201,12 +201,13 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		{
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
-			FreeImage_GetPixelColor(cubeImg, x, y + cubeH, &color);
+			FreeImage_GetPixelColor(cubeImg, x, cubeH * 2 - y - 1, &color);
 			tex1[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
 				| ((color.rgbReserved & 0x000000FF) << 24));
 		}
+
 
 	//Y+
 	uint32_t* tex2 = cubemapTextures[endCubemapTexId + 2] = new uint32_t[cubeW * cubeH];
@@ -215,7 +216,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		{
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
-			FreeImage_GetPixelColor(cubeImg, x + cubeW, y + cubeH * 2, &color);
+			FreeImage_GetPixelColor(cubeImg, x + cubeW, cubeH * 3 - y - 1, &color);
 			tex2[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -229,7 +230,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		{
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
-			FreeImage_GetPixelColor(cubeImg, x + cubeW, y, &color);
+			FreeImage_GetPixelColor(cubeImg, x + cubeW, cubeH - y - 1, &color);
 			tex3[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -243,7 +244,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		{
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
-			FreeImage_GetPixelColor(cubeImg, x + cubeH, y + cubeW, &color);
+			FreeImage_GetPixelColor(cubeImg, x + cubeH, cubeH * 2 - y - 1, &color);
 			tex4[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -257,7 +258,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		{
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
-			FreeImage_GetPixelColor(cubeImg, x + cubeW * 2, y + cubeH, &color);
+			FreeImage_GetPixelColor(cubeImg, cubeW * 3 + x, cubeH * 2 - y - 1, &color);
 			tex5[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -279,26 +280,42 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	texDesc.CPUAccessFlags = 0;
 	texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS | D3D11_RESOURCE_MISC_TEXTURECUBE;
+	HRESULT hr = dxDev.device->CreateTexture2D(&texDesc, nullptr, &dxCubemapTexture2D[endCubemapId]);
 
-	HRESULT hr = dxDev.device->CreateTexture2D(&texDesc, NULL, &dxCubemapTexture2D[endCubemapId]);
-
-	UINT rowPitch = (cubeW * 4) * sizeof(unsigned char);
-
-	dxDev.context->UpdateSubresource(dxCubemapTexture2D[endCubemapId], 0, NULL, cubemapTextures[endCubemapTexId], rowPitch,0);
-
-
-	
-	//create shader resource view desc
-	//D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 	ZeroMemory(&srvDesc, sizeof(srvDesc));
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;// D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.TextureCube.MipLevels = -1;
-	srvDesc.TextureCube.MostDetailedMip = 0;
-
-	//create shader resource view
+	srvDesc.Texture2D.MipLevels = -1;
+	//srvDesc.TextureCube.MostDetailedMip = 0;
 	hr = dxDev.device->CreateShaderResourceView(dxCubemapTexture2D[endCubemapId], &srvDesc, &cubemapSRVs[endCubemapId]);
+
+	D3D11_SUBRESOURCE_DATA pData[6];
+
+	for (int i = 0; i < 6; i++)
+	{
+		pData[i].pSysMem = cubemapTextures[endCubemapTexId + i];
+		pData[i].SysMemPitch = cubeW * sizeof(uint32_t);
+	}
+	int MipMapCount = 1 + floor(log10((float)max(cubeW, cubeH)) / log10(2.0));
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < MipMapCount; j++)
+		{
+			dxDev.context->UpdateSubresource(dxCubemapTexture2D[endCubemapId], D3D11CalcSubresource(j, i, MipMapCount), 0, pData[i].pSysMem, pData[i].SysMemPitch, 0);
+		}
+	}
+
 	dxDev.context->GenerateMips(cubemapSRVs[endCubemapId]);
+
+
+	UINT rowPitch = (cubeW * 4) * sizeof(unsigned char);
+
+	//dxDev.context->UpdateSubresource(dxCubemapTexture2D[endCubemapId], 0, NULL, cubemapTextures[endCubemapTexId], rowPitch,0);
+	
+	//create shader resource view desc
+	//D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+
 
 	texNames[endCubemapId] = fileName;
 
@@ -348,7 +365,7 @@ bool TextureManager::LoadDefeatImage(DxDevice & dxDev)
 	DxLoadImage("Texture/defeat_albedo.png", dxDev);
 	DxLoadImage("Texture/defeat_normal.png", dxDev);
 	DxLoadImage("Texture/defeat_mra.png", dxDev);
-	DxLoadNonHDRCubemap("Texture/defaet_skybox.png", dxDev);
+	DxLoadNonHDRCubemap("Texture/defaet_skybox.bmp", dxDev);
 	return true;
 }
 

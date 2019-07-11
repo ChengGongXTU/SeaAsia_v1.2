@@ -240,8 +240,8 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	half2 AB = half2(-1.04, 1.04) * a004 + iblRoughness.zw;
 	half3 envBRDF = F0 * AB.x + AB.y;
 	float3 R = normalize(-viewDir - 2 * dot(-viewDir, wNormal)*wNormal);
-	half4 iblCol = iblCubeMap.Sample(iblSamLinear, R);
-	half3 spec_Indirect = iblCol.xyz * envBRDF;
+	half4 iblCol = iblCubeMap.SampleLevel(iblSamLinear, R, roughness * 7);
+	half3 spec_Indirect = iblCol.xyz * envBRDF * matMask;
 
 	half3 L_indirect = spec_Indirect;
 
