@@ -15,6 +15,7 @@ void TextureManager::CreateDxMemory(int ObjNum) {
 	cubemapTextures = new uint32_t*[ObjNum*6];
 	dxCubemapTexture2D = new ID3D11Texture2D*[ObjNum];
 	cubemapNames = new const char*[ObjNum];
+	cubemapMipmapCount = new UINT[ObjNum];
 
 	for (int i = 0; i < ObjNum; i++)
 	{
@@ -36,7 +37,7 @@ void TextureManager::CreateDxMemory(int ObjNum) {
 	}
 }
 
-void TextureManager::StartUp() {
+void TextureManager::StartUp(DxDevice &dxDev) {
 	totalTexureNumber = 0;
 	endTextureId = 0;
 	currentTextureId = -1;
@@ -55,6 +56,8 @@ void TextureManager::StartUp() {
 		endCubemapId = 0;
 
 	CreateDxMemory(500);
+
+	LoadDefaultImage(dxDev);
 
 }
 
@@ -82,19 +85,21 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 	//load image by freeimage
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
 	FIBITMAP* img = FreeImage_Load(fif, fileName);
+	int texW = FreeImage_GetWidth(img);
+	int texH = FreeImage_GetHeight(img);
 
 	//create texture
-	FIBITMAP* img1 = FreeImage_Rescale(img, 1024, 1024);
-	uint32_t* tex =  textures[endTextureId] = new uint32_t[1024 * 1024];
+	FIBITMAP* img1 = FreeImage_Rescale(img, texW, texH);
+	uint32_t* tex =  textures[endTextureId] = new uint32_t[texW * texH];
 	int bitCount = FreeImage_GetBPP(img1);
 	if (bitCount == 32)
 	{
-		for (int y = 0; y < 1024; y++)
-			for (int x = 0; x < 1024; x++)
+		for (int y = 0; y < texH; y++)
+			for (int x = 0; x < texW; x++)
 			{
 				RGBQUAD color;
-				FreeImage_GetPixelColor(img1, x, y, &color);
-				tex[y * 1024 + x] = (int)((color.rgbRed & 0x000000FF)
+				FreeImage_GetPixelColor(img1, x, texH - y - 1, &color);
+				tex[y * texW + x] = (int)((color.rgbRed & 0x000000FF)
 					| ((color.rgbGreen & 0x000000FF) << 8)
 					| ((color.rgbBlue & 0x000000FF) << 16)
 					| ((color.rgbReserved & 0x000000FF) << 24));
@@ -102,14 +107,14 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 	}
 	else
 	{
-		for (int y = 0; y < 1024; y++)
-			for (int x = 0; x < 1024; x++)
+		for (int y = 0; y < texH; y++)
+			for (int x = 0; x < texW; x++)
 			{
 				RGBQUAD color;
 				color.rgbReserved = (byte)255;
 				
-				FreeImage_GetPixelColor(img1, x, y, &color);
-				tex[y * 1024 + x] = (int)((color.rgbRed & 0x000000FF)
+				FreeImage_GetPixelColor(img1, x, texH - y - 1, &color);
+				tex[y * texW + x] = (int)((color.rgbRed & 0x000000FF)
 					| ((color.rgbGreen & 0x000000FF) << 8)
 					| ((color.rgbBlue & 0x000000FF) << 16)
 					| ((color.rgbReserved & 0x000000FF) << 24));
@@ -122,8 +127,8 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 	//create texture2D Desc
 	//D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
-	texDesc.Width = 1024;
-	texDesc.Height = 1024;
+	texDesc.Width = texW;
+	texDesc.Height = texH;
 	texDesc.MipLevels = 0;
 	texDesc.ArraySize = 1;
 	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -139,10 +144,10 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 	//D3D11_SUBRESOURCE_DATA sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.pSysMem = textures[endTextureId];
-	sd.SysMemPitch = 1024 * sizeof(uint32_t);
-	sd.SysMemSlicePitch = 1024 * 1024 * sizeof(uint32_t);
+	sd.SysMemPitch = texW * sizeof(uint32_t);
+	sd.SysMemSlicePitch = texW * texH * sizeof(uint32_t);
 
-	UINT rowPitch = (1024 * 4) * sizeof(unsigned char);
+	UINT rowPitch = (texW * 4) * sizeof(unsigned char);
 	dxDev.context->UpdateSubresource(dxTexure2D[endTextureId], 0, NULL, textures[endTextureId], rowPitch, 0);
 
 	//create texture2D
@@ -298,6 +303,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 		pData[i].SysMemPitch = cubeW * sizeof(uint32_t);
 	}
 	int MipMapCount = 1 + floor(log10((float)max(cubeW, cubeH)) / log10(2.0));
+	cubemapMipmapCount[endCubemapId] = MipMapCount;
 	for (int i = 0; i < 6; i++)
 	{
 		for (int j = 0; j < MipMapCount; j++)
@@ -310,12 +316,6 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 
 
 	UINT rowPitch = (cubeW * 4) * sizeof(unsigned char);
-
-	//dxDev.context->UpdateSubresource(dxCubemapTexture2D[endCubemapId], 0, NULL, cubemapTextures[endCubemapTexId], rowPitch,0);
-	
-	//create shader resource view desc
-	//D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-
 
 	texNames[endCubemapId] = fileName;
 
@@ -360,12 +360,12 @@ bool TextureManager::DxSetSamplerDesc(D3D11_FILTER filterType,
 
 }
 
-bool TextureManager::LoadDefeatImage(DxDevice & dxDev)
+bool TextureManager::LoadDefaultImage(DxDevice & dxDev)
 {
-	DxLoadImage("Texture/defeat_albedo.png", dxDev);
-	DxLoadImage("Texture/defeat_normal.png", dxDev);
-	DxLoadImage("Texture/defeat_mra.png", dxDev);
-	DxLoadNonHDRCubemap("Texture/defaet_skybox.bmp", dxDev);
+	DxLoadImage("Texture/Default_albedo.png", dxDev);
+	DxLoadImage("Texture/Default_normal.png", dxDev);
+	DxLoadImage("Texture/Default_mra.png", dxDev);
+	DxLoadNonHDRCubemap("Texture/Default_skybox.bmp", dxDev);
 	return true;
 }
 

@@ -1,6 +1,6 @@
 #include "cameramanager.h"
 
-void CameraManager::StartUp()
+void CameraManager::StartUp(DxDevice &dxDev)
 {
 	ZeroMemory(&bd, sizeof(bd));
 	viewTransformBuffer = NULL;
@@ -8,14 +8,20 @@ void CameraManager::StartUp()
 	worldjTransformBuffer = NULL;
 	viewTransform.mView = XMMatrixIdentity();
 	projectionTransform.mProjection = XMMatrixIdentity();
+	CreateWorldBuffer(dxDev);
+	CreateViewBuffer(dxDev);
+	CreateProjectionBuffer(dxDev);
 }
 
 
 void CameraManager::ShutUp()
 {
 	ZeroMemory(&bd, sizeof(bd));
+	viewTransformBuffer->Release();
 	viewTransformBuffer = NULL;
+	projTransformBuffer->Release();
 	projTransformBuffer = NULL;
+	worldjTransformBuffer->Release();
 	worldjTransformBuffer = NULL;
 	viewTransform.mView = XMMatrixIdentity();
 	projectionTransform.mProjection = XMMatrixIdentity();
@@ -98,3 +104,4 @@ bool CameraManager::InputCamera(DxDevice & dev)
 
 	return true;
 }
+

@@ -4,7 +4,7 @@ bool BasicManager::StartUp(WindowsDevice &winDevice)
 {
 	if (FAILED(dxDevice.Init(winDevice)))	return 0;
 	objManager.StartUp();
-	textureManager.StartUp();
+	textureManager.StartUp(dxDevice);
 	sceneManager.StartUp();
 	materialsManager.StartUp();
 	return true;

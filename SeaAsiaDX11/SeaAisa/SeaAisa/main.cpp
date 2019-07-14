@@ -37,8 +37,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 		return 0;
 	}
 
-	basicManager.textureManager.LoadDefeatImage(basicManager.dxDevice);
-
 	g_pSwapChain = basicManager.dxDevice.swapChain;
 	g_pd3dDevice = basicManager.dxDevice.device;
 	g_pd3dDeviceContext = basicManager.dxDevice.context;
@@ -47,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 	// initialize low-level render manager
 	LowLevelRendermanager lowlevelrendermanager;
-	if (!lowlevelrendermanager.StartUp()) {
+	if (!lowlevelrendermanager.StartUp(basicManager)) {
 		MessageBox(NULL, L"render can't be created!", L"ERROR", MB_OK);
 		return 0;
 	}
@@ -67,6 +65,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 
 	float horizontalAngle = 0;
 	float verticalAngle = 0;
+
+	RenderSceneId = basicManager.sceneManager.currentSceneId;
+	RenderCameraId = basicManager.sceneManager.sceneList[RenderSceneId].currentCameraId;
 
 	ZeroMemory(&msg, sizeof(msg));
 	while (WM_QUIT != msg.message)

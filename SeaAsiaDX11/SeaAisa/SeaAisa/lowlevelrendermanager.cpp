@@ -1,15 +1,15 @@
 #include "lowlevelrendermanager.h"
 using namespace fbxsdk;
 
-bool LowLevelRendermanager::StartUp()
+bool LowLevelRendermanager::StartUp(BasicManager &basicMng)
 {
-	shaderManager.StartUp();
+	shaderManager.StartUp(basicMng.dxDevice);
 	primitiveManager.StartUp();
 	lightManager.StartUp();
-	cameraManager.StartUp();
-
+	cameraManager.StartUp(basicMng.dxDevice);
+	skybox.Startup(basicMng, shaderManager);
 	if (primitiveManager.objId != -1)	return false;
-
+	SetDefaultViewPort(basicMng);
 	return true;
 }
 
@@ -378,6 +378,9 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 	DeferredDrawSceneLighting(basicMng, SceneId, 0, scene.currentDlId);
 	basicMng.dxDevice.context->OMSetBlendState(0, factor, 0xffffffff);
 	if (pBlendState != NULL) pBlendState->Release(), pBlendState = NULL;
+	
+	//--------------------------sky box-----------------------------------------------
+	skybox.RenderSkyBox(shaderManager, basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
 }
 
 
@@ -391,6 +394,16 @@ void LowLevelRendermanager::SetViewPort(BasicManager & basicMng, float x, float 
 	basicMng.dxDevice.vp.MinDepth = mind;
 	basicMng.dxDevice.vp.MaxDepth = maxd;
 	basicMng.dxDevice.context->RSSetViewports(1, &basicMng.dxDevice.vp);
+}
+
+void LowLevelRendermanager::SetDefaultViewPort(BasicManager & basicMng)
+{
+	float vppos[2] = { 0.f,0.f };
+	float w1 = GetSystemMetrics(SM_CXSCREEN);
+	float h2 = GetSystemMetrics(SM_CYSCREEN);
+	float vpwh[2] = { w1,h2 };
+	float vpdepth[2] = { 0.f,1.f };
+	SetViewPort(basicMng, vppos[0], vppos[1], vpwh[0], vpwh[1], vpdepth[0], vpdepth[1]);
 }
 
 void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, WindowsDevice &wnDev)
@@ -1626,7 +1639,7 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 			}
 		}
 
-		//set texture defeat
+		//set texture Default
 		for (int matCount = 0; matCount < unity->materialNum; matCount++)
 		{
 			DxMaterials &mat =  basicMng.materialsManager.dxMaterial[unity->MaterialsIdIndex[matCount]];
@@ -1771,6 +1784,8 @@ void LowLevelRendermanager::LoadFBXLight(FbxNode *pNode, DxScene &scene, BasicMa
 		globalM = matR * matS * globalM *  matS;
 
 		dl_dir = FbxVector4(0, -1, 0, 1);
+		globalM.SetTRS(FbxVector4(0, 0, 0, 1), pNode->EvaluateGlobalTransform().GetR(), FbxVector4(1, 1, 1, 1));
+		globalM = matR * matS * globalM *  matS;
 		dl_dir = globalM.MultNormalize(dl_dir);
 		dl_dir.Normalize();
 		dirlight.Dir = XMFLOAT4(dl_dir.mData[0], dl_dir.mData[1], dl_dir.mData[2], dl_dir.mData[3]);

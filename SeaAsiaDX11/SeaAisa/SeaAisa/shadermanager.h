@@ -1,6 +1,7 @@
 #pragma once
 #include"SeeAisa.h"
 #include"dxdevice.h"
+#include"wcharandwstring.h"
 
 class ShaderManager {
 public:
@@ -21,7 +22,7 @@ public:
 	ShaderManager(){}
 	~ShaderManager(){}
 
-	void StartUp();
+	void StartUp(DxDevice &dev);
 	void ShutUp();
 
 	bool LoadVertexShader(WCHAR* shaderName, LPCSTR vsMain, LPCSTR vsVersion);
@@ -32,4 +33,7 @@ public:
 	bool LoadAndCreatePixelShader(WCHAR* shaderName, LPCSTR psMain ,LPCSTR psVersion, DxDevice &dev);
 	bool InputVertexShader(DxDevice &dev, int vsId);
 	bool InputPixelShader(DxDevice &dev, int psId);
+
+	bool LoadDefaultShader(DxDevice &dev);
+	bool LoadShader(char* shaderName, DxDevice &dev);
 };

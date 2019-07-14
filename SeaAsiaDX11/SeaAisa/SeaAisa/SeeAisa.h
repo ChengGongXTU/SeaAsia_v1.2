@@ -84,6 +84,7 @@ class PhysicsParameterManager;
 class RayTraceManager;
 
 //Software-LowLevel-RenderModule
+class LowLevelRendermanager;
 //Basic Mesh
 class Vector;
 class Point;

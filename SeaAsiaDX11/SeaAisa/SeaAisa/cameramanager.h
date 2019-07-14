@@ -31,7 +31,7 @@ public:
 	CameraManager(){}
 	~CameraManager(){}
 
-	void StartUp();
+	void StartUp(DxDevice &dev);
 	void ShutUp();
 
 	bool CreateViewBuffer(DxDevice &dev);

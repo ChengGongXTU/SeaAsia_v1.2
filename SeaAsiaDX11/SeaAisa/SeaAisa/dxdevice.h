@@ -1,6 +1,7 @@
 #pragma once
 
 #include"SeeAisa.h"
+#include"dxdevice.h"
 
 class DxDevice
 {

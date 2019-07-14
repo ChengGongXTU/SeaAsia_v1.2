@@ -7,6 +7,7 @@
 #include"lightmanager.h"
 #include"primitivemanager.h"
 #include"cameramanager.h"
+#include"SkyBox.h"
 
 class LowLevelRendermanager {
 public:
@@ -14,12 +15,12 @@ public:
 	PrimitiveManager primitiveManager;
 	LightManager lightManager;
 	CameraManager cameraManager;
+	SkyBox skybox;
 	
-
 	LowLevelRendermanager(){}
 	~LowLevelRendermanager(){}
 
-	bool StartUp();
+	bool StartUp( BasicManager &basicMng);
 	void ShutUp();
 
 	bool LoadUnityFromObjFile(wstring objName, wstring mtlName, wstring textureName,DxScene &scene,
@@ -33,6 +34,7 @@ public:
 	bool DeferredDrawSceneLighting(BasicManager & basicMng, int SceneId, int cameraId, int dlightId);
 	void RenderScene(BasicManager &basicMng, WindowsDevice &wnDev, int SceneId);
 	void SetViewPort(BasicManager &basicMng, float x, float y, float w, float h, float mind, float maxd);
+	void SetDefaultViewPort(BasicManager &basicMng);
 	void ResizeRenderpipeline(BasicManager &basicMng,WindowsDevice &wnDev);
 	void ReverseUnityNormal(BasicManager &basicMng, Unity &unity);
 	void ReverseUnityNormalZaxis(BasicManager &basicMng, Unity &unity);
@@ -40,7 +42,6 @@ public:
 	void LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicManager &basicMng, Unity* unity);
 	void LoadFBXLight(FbxNode * pNode, DxScene & scene, BasicManager & basicMng, Unity * unity);
 	void LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int childIndex, DxScene &scene, BasicManager &basicMng);
-
 	void DeferredRenderScene(BasicManager &basicMng, WindowsDevice &wnDev, int SceneId);
 	
 };

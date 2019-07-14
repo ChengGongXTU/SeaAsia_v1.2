@@ -94,4 +94,5 @@ public:
 
 	void setUp(int uniNum, int camNum, int plNum, int dlNum);
 
+	void AddDefaultCamera();
 };

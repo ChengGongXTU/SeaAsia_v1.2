@@ -65,6 +65,10 @@ cbuffer CameraParams : register(b1)
 	float4 CameraPos;
 };
 
+cbuffer CubeMipmapLevel : register(b2)
+{
+	int maxMipmapLevel;
+};
 
 
 // Input/Output structures
@@ -160,12 +164,12 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float3 lightCol = clamp(LightDirAndColor(lightDir, wPos) * matMask, 0.0, 10000);
 	lightDir = -lightDir;
 	float dot_nl = dot(lightDir, wNormal);
-	float dot_nl1 = max(dot_nl, 0);
+	float dot_nl1 = max(dot_nl, 0.0);
 	float dot_nv = dot(viewDir, wNormal);
-	float dot_nv1 = max(dot_nv, 0.0001);
+	float dot_nv1 = max(dot_nv, 0.0);
 	float3 halfDir = normalize(viewDir + lightDir) * matMask;
 	float dot_nh = dot(wNormal, halfDir);
-	float dot_nh1 = max(dot_nh, 0.0001);
+	float dot_nh1 = max(dot_nh, 0.0);
 	float dot_lh = dot(lightDir, halfDir);
 	float dot_lh1 = max(dot_lh, 0.0001);
 
@@ -177,7 +181,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float Fl = (FD90 - 1) * pow(1 - dot_nl, 5);
 	float Fd = (FD90 - 1) * pow(1 - dot_nv, 5);
 	float3 diffuse = (diffuseCol / 3.1415) * (1 + Fl) * (1 + Fd);
-
+	
 	/*
 	//GTR D: metal and anisotropic r = 2 , non_metal and isotropic r = 1
 	float a = roughness * roughness;
@@ -219,7 +223,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float k = pow(roughness + 1, 2) / 8;
 	float Gv = dot_nv1 / (dot_nv1 * (1 - k) + k);
 	float Gl = dot_nl1 / (dot_nl1 * (1 - k) + k);
-	float G2 = max(Gv,0.0) * max(Gl, 0.0);
+	float G2 = Gv * Gl;
 
 	float3 specular = D * G2 * F / (4 * dot_nl1 * dot_nv1);
 
@@ -227,7 +231,6 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	diffuse = max(diffuse, 0.0);
 	specular = max(specular, 0.0);
 	float3 f_lv = diffuse + specular * specAO;
-
 	//direct illumination
 	float3 L_direct = f_lv * dot_nl1 * lightCol;
 	L_direct = min(L_direct, 10000);
@@ -240,7 +243,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	half2 AB = half2(-1.04, 1.04) * a004 + iblRoughness.zw;
 	half3 envBRDF = F0 * AB.x + AB.y;
 	float3 R = normalize(-viewDir - 2 * dot(-viewDir, wNormal)*wNormal);
-	half4 iblCol = iblCubeMap.SampleLevel(iblSamLinear, R, roughness * 7);
+	half4 iblCol = iblCubeMap.SampleLevel(iblSamLinear, R, roughness *11);
 	half3 spec_Indirect = iblCol.xyz * envBRDF * matMask;
 
 	half3 L_indirect = spec_Indirect;

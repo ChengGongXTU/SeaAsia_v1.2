@@ -67,6 +67,23 @@ void DxScene::setUp(int uniNum, int camNum, int plNum, int dlNum) {
 	}
 }
 
+void DxScene::AddDefaultCamera()
+{	
+	static float position[3] = { 0,0,0 };
+	static float lookat[3] = { 0,0,1.f };
+	static float up[3] = { 0,1.f,0 };
+	static float cnear = 0.1f;
+	static float cfar = 1000.f;
+	static float aspect = 60;
+	static float cwidth = GetSystemMetrics(SM_CXSCREEN);
+	static float cheight = GetSystemMetrics(SM_CYSCREEN);
+
+	currentCameraId = endCameraId;
+	cameraList[endCameraId].Init(position[0], position[1], position[2], lookat[0], lookat[1], lookat[2], up[0], up[1], up[2], cnear, cfar, aspect*3.1415f / 360.f, cwidth, cheight);
+	endCameraId++;
+	cameraNum++;
+}
+
 
 
 //bool unity::LoadObjFile(wstring obj, wstring mtl)

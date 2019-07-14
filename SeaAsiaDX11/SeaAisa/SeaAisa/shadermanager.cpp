@@ -1,6 +1,6 @@
 #include "shadermanager.h"
 
-void ShaderManager::StartUp()
+void ShaderManager::StartUp(DxDevice &dev)
 {	
 	vsBlob = new ID3DBlob*[500];
 	psBlob = new ID3DBlob*[500];
@@ -21,6 +21,8 @@ void ShaderManager::StartUp()
 
 	endPSId = 0;
 	currentPSId = 0;
+
+	LoadDefaultShader(dev);
 }
 
 void ShaderManager::ShutUp()
@@ -117,5 +119,57 @@ bool ShaderManager::InputVertexShader(DxDevice &dev, int vsId)
 bool ShaderManager::InputPixelShader(DxDevice & dev, int psId)
 {
 	dev.context->PSSetShader(PS[psId], NULL, 0);
+	return true;
+}
+
+bool ShaderManager::LoadDefaultShader(DxDevice & dev)
+{	
+
+	//1
+	char PBRGbufferNameChar[128] = "Shader/PBRGeometryPass.fx"; // "hlsl.fx";
+	//2
+	char PBRShadingNameChar[128] = "Shader/PBRLightShading.fx"; // "hlsl.fx";
+	//3
+	char SkyboxNameChar[128] = "Shader/Skybox.fx"; // "hlsl.fx";
+
+
+	if (!LoadShader(PBRGbufferNameChar, dev))
+	{
+		ImGui::OpenPopup("PBR Geometry Error");
+	}
+
+
+	if (!LoadShader(PBRShadingNameChar, dev))
+	{
+		ImGui::OpenPopup("PBR shading Error");
+	}
+
+	if (!LoadShader(SkyboxNameChar, dev))
+	{
+		ImGui::OpenPopup("skybox shading Error");
+	}
+
+	return true;
+}
+
+bool ShaderManager::LoadShader(char * shaderName, DxDevice & dev)
+{	
+	char vsName[128] = "VS";
+	char vsVersion[128] = "vs_5_0";
+	char psName[128] = "PS";
+	char psVersion[128] = "ps_5_0";
+
+	wchar_t shaderNameWchar[129] = L"";
+	CharToWchar(shaderName, shaderNameWchar);
+
+	if (!LoadAndCreateVertexShader(shaderNameWchar, vsName, vsVersion, dev))
+	{
+		return false;
+	}
+	else if (!LoadAndCreatePixelShader(shaderNameWchar, psName, psVersion, dev))
+	{
+		return false;
+	}
+
 	return true;
 }

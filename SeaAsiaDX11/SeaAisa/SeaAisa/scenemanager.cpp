@@ -13,8 +13,10 @@ void SceneManager::CreatSceneMemory(int num) {
 
 void SceneManager::StartUp() {
 	currentSceneId = 0;
-	endSceneId = 24;
-	CreatSceneMemory(24);
+	endSceneId = 1;
+	CreatSceneMemory(1);
+	sceneList[endSceneId - 1].setUp(10000, 10, 10, 10);
+	sceneList[endSceneId - 1].AddDefaultCamera();
 }
 
 void SceneManager::ShutUp() {

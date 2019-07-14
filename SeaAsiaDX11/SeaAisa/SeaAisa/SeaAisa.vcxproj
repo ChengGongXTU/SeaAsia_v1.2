@@ -206,6 +206,7 @@
     <ClInclude Include="SeeAisa.h" />
     <ClInclude Include="shadermanager.h" />
     <ClInclude Include="shape.h" />
+    <ClInclude Include="SkyBox.h" />
     <ClInclude Include="stb_rect_pack.h" />
     <ClInclude Include="stb_textedit.h" />
     <ClInclude Include="stb_truetype.h" />
@@ -267,6 +268,7 @@
     <ClCompile Include="scenemanager.cpp" />
     <ClCompile Include="shadermanager.cpp" />
     <ClCompile Include="shape.cpp" />
+    <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="texturemanager.cpp" />
     <ClCompile Include="transform.cpp" />
     <ClCompile Include="wcharandwstring.cpp" />
@@ -307,6 +309,11 @@
     <Image Include="Texture.dds" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shader\Skybox.fx">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
     <None Include="Shader\PBRGeometryPass.fx">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PS</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
