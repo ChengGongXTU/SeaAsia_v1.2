@@ -131,7 +131,8 @@ bool ShaderManager::LoadDefaultShader(DxDevice & dev)
 	char PBRShadingNameChar[128] = "Shader/PBRLightShading.fx"; // "hlsl.fx";
 	//3
 	char SkyboxNameChar[128] = "Shader/Skybox.fx"; // "hlsl.fx";
-
+	//4
+	char PostProcessNameChar[128] = "Shader/PostProcess.fx"; // "hlsl.fx";
 
 	if (!LoadShader(PBRGbufferNameChar, dev))
 	{
@@ -148,6 +149,12 @@ bool ShaderManager::LoadDefaultShader(DxDevice & dev)
 	{
 		ImGui::OpenPopup("skybox shading Error");
 	}
+
+	if (!LoadShader(PostProcessNameChar, dev))
+	{
+		ImGui::OpenPopup("pp shading Error");
+	}
+
 
 	return true;
 }

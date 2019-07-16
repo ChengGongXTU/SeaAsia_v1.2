@@ -195,6 +195,9 @@
     <ClInclude Include="SkyBox.h">
       <Filter>头文件\Lowlevelrender</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessManager.h">
+      <Filter>头文件\Lowlevelrender</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -365,6 +368,9 @@
     <ClCompile Include="SkyBox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
@@ -424,5 +430,6 @@
   <ItemGroup>
     <FxCompile Include="Shader\PBRLightShading.fx" />
     <FxCompile Include="Shader\Skybox.fx" />
+    <FxCompile Include="Shader\PostProcess.fx" />
   </ItemGroup>
 </Project>

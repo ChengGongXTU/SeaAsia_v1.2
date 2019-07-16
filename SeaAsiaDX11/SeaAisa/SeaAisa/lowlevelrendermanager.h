@@ -8,6 +8,7 @@
 #include"primitivemanager.h"
 #include"cameramanager.h"
 #include"SkyBox.h"
+#include"PostProcessManager.h"
 
 class LowLevelRendermanager {
 public:
@@ -16,6 +17,7 @@ public:
 	LightManager lightManager;
 	CameraManager cameraManager;
 	SkyBox skybox;
+	PostProcessManager ppMng;
 	
 	LowLevelRendermanager(){}
 	~LowLevelRendermanager(){}

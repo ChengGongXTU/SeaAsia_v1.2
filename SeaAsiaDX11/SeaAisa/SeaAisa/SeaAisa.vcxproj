@@ -192,6 +192,7 @@
     <ClInclude Include="mainwindowui.h" />
     <ClInclude Include="materialsmanager.h" />
     <ClInclude Include="objmanager.h" />
+    <ClInclude Include="PostProcessManager.h" />
     <ClInclude Include="primitivemanager.h" />
     <ClInclude Include="rand.h" />
     <ClInclude Include="ray.h" />
@@ -258,6 +259,7 @@
     <ClCompile Include="mainwindowui.cpp" />
     <ClCompile Include="materialsmanager.cpp" />
     <ClCompile Include="objmanager.cpp" />
+    <ClCompile Include="PostProcessManager.cpp" />
     <ClCompile Include="primitivemanager.cpp" />
     <ClCompile Include="RayLight.cpp" />
     <ClCompile Include="RayMaterial.cpp" />
@@ -309,6 +311,11 @@
     <Image Include="Texture.dds" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Shader\PostProcess.fx">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PS</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="Shader\Skybox.fx">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VS</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

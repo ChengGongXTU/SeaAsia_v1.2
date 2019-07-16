@@ -18,10 +18,10 @@ public:
 
 	DXGI_SWAP_CHAIN_DESC sd;
 	IDXGISwapChain* swapChain;
-	ID3D11Texture2D* rtt[4];
-	ID3D11RenderTargetView* rtv[4];
-	ID3D11ShaderResourceView* rtsrv[4];
-	ID3D11SamplerState* rtSampler[4];
+	ID3D11Texture2D* rtt[5];
+	ID3D11RenderTargetView* rtv[5];
+	ID3D11ShaderResourceView* rtsrv[5];
+	ID3D11SamplerState* rtSampler[5];
 	ID3D11DepthStencilView* dsv;
 	ID3D11Texture2D* mDepthStencilBuffer;
 
@@ -50,10 +50,10 @@ public:
 		dxgiFactory = NULL;
 
 		swapChain = NULL;
-		rtt[0] = rtt[1] = rtt[2] = rtt[3] = NULL;
-		rtv[0] = rtv[1] = rtv[2] = rtv[3] = NULL;
-		rtsrv[0] = rtsrv[1] = rtsrv[2] = rtsrv[3] = NULL;
-		rtSampler[0] = rtSampler[1] = rtSampler[2] = rtSampler[3] = NULL;
+		rtt[0] = rtt[1] = rtt[2] = rtt[3] = rtt[4] = NULL;
+		rtv[0] = rtv[1] = rtv[2] = rtv[3] = rtv[4] = NULL;
+		rtsrv[0] = rtsrv[1] = rtsrv[2] = rtsrv[3] = rtsrv[4] = NULL;
+		rtSampler[0] = rtSampler[1] = rtSampler[2] = rtSampler[3] = rtSampler[4] = NULL;
 		dsv = NULL;
 
 		//effect = NULL;
@@ -76,7 +76,7 @@ public:
 	
 	void CleanupRenderTarget();
 
-	void CreateRenderTarget();
+	void CreateRenderTarget(WindowsDevice &wnDev);
 
 };
 

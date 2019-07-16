@@ -19,6 +19,7 @@ struct PS_INPUT    //output structure for skymap vertex shader
 	float3 texcoord : TEXCOORD;
 };
 
+
 PS_INPUT VS(VS_INPUT v)
 {
 	PS_INPUT o = (PS_INPUT)0;
@@ -30,8 +31,8 @@ PS_INPUT VS(VS_INPUT v)
 	return o;
 }
 
-float4 PS(PS_INPUT i) : SV_Target
-{  
+half4 PS(PS_INPUT i) : SV_TARGET
+{ 
 	return skyboxCubemap.Sample(skyboxCubemapSampleState, i.texcoord);
 }
 

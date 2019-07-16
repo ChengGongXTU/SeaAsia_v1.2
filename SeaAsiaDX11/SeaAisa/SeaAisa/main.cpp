@@ -181,6 +181,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLine, 
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[1], (float*)&clear_col);
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[2], (float*)&clear_col);
 		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[3], (float*)&clear_col);
+		basicManager.dxDevice.context->ClearRenderTargetView(basicManager.dxDevice.rtv[4], (float*)&clear_col);
 		lowlevelrendermanager.DeferredRenderScene(basicManager,winDevice, RenderSceneId);
 		ImGui::Render();
 		basicManager.dxDevice.swapChain->Present(0, 0);
@@ -211,7 +212,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ImGui_ImplDX11_InvalidateDeviceObjects();
 			dxdev->CleanupRenderTarget();
 			g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
-			dxdev->CreateRenderTarget();
+			dxdev->CreateRenderTarget(winDevice);
 
 			renderMng->ResizeRenderpipeline(*basicMng,winDevice);
 			ImGui_ImplDX11_CreateDeviceObjects();

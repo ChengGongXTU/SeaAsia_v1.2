@@ -10,6 +10,7 @@ bool LowLevelRendermanager::StartUp(BasicManager &basicMng)
 	skybox.Startup(basicMng, shaderManager);
 	if (primitiveManager.objId != -1)	return false;
 	SetDefaultViewPort(basicMng);
+	ppMng.Startup(basicMng.dxDevice, shaderManager);
 	return true;
 }
 
@@ -347,7 +348,7 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 
 //------------------------light shading---------------------------------------------------------------------------
 	//------set first rtv-----------
-	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[0], NULL);
+	basicMng.dxDevice.context->OMSetRenderTargets(1, &basicMng.dxDevice.rtv[4], NULL);
 
 	ID3D11BlendState* pBlendState = NULL;
 	D3D11_BLEND_DESC lightBlendDesc = { 0 };
@@ -381,6 +382,7 @@ void LowLevelRendermanager::DeferredRenderScene(BasicManager & basicMng, Windows
 	
 	//--------------------------sky box-----------------------------------------------
 	skybox.RenderSkyBox(shaderManager, basicMng.dxDevice, scene.cameraList[scene.currentCameraId]);
+	ppMng.Render(basicMng, shaderManager);
 }
 
 
@@ -437,6 +439,8 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 
 		textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[1]);
+		textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[4]);
 
 		textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		basicMng.dxDevice.device->CreateTexture2D(&textureDesc, NULL, &basicMng.dxDevice.rtt[2]);
@@ -450,6 +454,7 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[2], 0, &basicMng.dxDevice.rtv[2]);				// use backbufer as render target
 		//swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&rtt[3]));  //backbuffer get data from mSwapChain
 		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[3], 0, &basicMng.dxDevice.rtv[3]);				// use backbufer as render target
+		basicMng.dxDevice.device->CreateRenderTargetView(basicMng.dxDevice.rtt[4], 0, &basicMng.dxDevice.rtv[4]);
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
 		shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -458,31 +463,32 @@ void LowLevelRendermanager::ResizeRenderpipeline(BasicManager &basicMng, Windows
 
 		shaderResourceViewDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[1], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[1]);
+		shaderResourceViewDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[4], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[4]);
 
 		shaderResourceViewDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[2], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[2]);
 		basicMng.dxDevice.device->CreateShaderResourceView(basicMng.dxDevice.rtt[3], &shaderResourceViewDesc, &basicMng.dxDevice.rtsrv[3]);
 
-
-		// create the sampler
+		/*
 		D3D11_SAMPLER_DESC samplerDescription;
-		samplerDescription.Filter = D3D11_FILTER_ANISOTROPIC;
+		ZeroMemory(&samplerDescription, sizeof(samplerDescription));
+		samplerDescription.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 		samplerDescription.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 		samplerDescription.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		samplerDescription.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDescription.MipLODBias = 0.0f;
+		samplerDescription.MipLODBias = 0;
 		//samplerDescription.MaxAnisotropy = m_featureLevel > D3D_FEATURE_LEVEL_9_1 ? 4 : 2;
 		samplerDescription.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		samplerDescription.BorderColor[0] = 0.0f;
-		samplerDescription.BorderColor[1] = 0.0f;
-		samplerDescription.BorderColor[2] = 0.0f;
-		samplerDescription.BorderColor[3] = 0.0f;
 		samplerDescription.MinLOD = 0;      // This allows the use of all mip levels
 		samplerDescription.MaxLOD = D3D11_FLOAT32_MAX;
+
 		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[0]);
 		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[1]);
 		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[2]);
 		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[3]);
+		basicMng.dxDevice.device->CreateSamplerState(&samplerDescription, &basicMng.dxDevice.rtSampler[4]);
+		*/
 
 		// create depth/stencil buffer and view
 		// set the parameter for buffer

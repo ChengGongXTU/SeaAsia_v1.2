@@ -274,7 +274,10 @@ void SkyBox::ShutUp()
 }
 
 void SkyBox::RenderSkyBox(ShaderManager & shaderMng, DxDevice & dxdev, DxCamera & camera)
-{	
+{		
+	
+	dxdev.context->VSSetShader(shaderMng.VS[vertexShaderIndex], 0, 0);
+	dxdev.context->PSSetShader(shaderMng.PS[pixelShaderIndex], 0, 0);
 	dxdev.context->IASetInputLayout(skyBoxInputLayout);
 	UINT stride = sizeof(SkyBoxMeshVertex);
 	UINT offset = 0;
@@ -313,9 +316,7 @@ void SkyBox::RenderSkyBox(ShaderManager & shaderMng, DxDevice & dxdev, DxCamera 
 	dxdev.context->PSSetShaderResources(0, 1, &skyboxCubemapSRV);
 	dxdev.context->PSSetSamplers(0, 1, &skyBoxCubemapSampleState);
 
-	dxdev.context->VSSetShader(shaderMng.VS[vertexShaderIndex], 0, 0);
-	dxdev.context->PSSetShader(shaderMng.PS[pixelShaderIndex], 0, 0);
-	dxdev.context->OMSetRenderTargets(1, &dxdev.rtv[0], dxdev.dsv);
+	dxdev.context->OMSetRenderTargets(1, &dxdev.rtv[4], dxdev.dsv);
 	dxdev.context->OMSetDepthStencilState(DSLessEqual, 0);
 	dxdev.context->RSSetState(RSCullNone);
 	dxdev.context->DrawIndexed(faceNum * 3, 0, 0);

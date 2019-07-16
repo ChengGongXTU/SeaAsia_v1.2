@@ -140,7 +140,7 @@ float3 LightDirAndColor(inout float3 dir, in float3 worldPos)
 
 }
 
-float4 PS(PS_INPUT i) : SV_TARGET
+half4 PS(PS_INPUT i) : SV_TARGET
 {
 	//sample rt info
 	float4 rt0 = RT0.Sample(SamLinear0, i.uv);
@@ -172,8 +172,6 @@ float4 PS(PS_INPUT i) : SV_TARGET
 	float dot_nh1 = max(dot_nh, 0.0);
 	float dot_lh = dot(lightDir, halfDir);
 	float dot_lh1 = max(dot_lh, 0.0001);
-
-
 
 	//disney diffuse 2012:
 	float3 diffuseCol = lerp(0.022, albedo, 1 - metallic);
@@ -250,7 +248,7 @@ float4 PS(PS_INPUT i) : SV_TARGET
 
 	half3 finalCol = L_direct + L_indirect;
 
-	return half4(finalCol.xyz,1.0);
+	return half4(finalCol.xyz, 1.0);
 
 
 }
