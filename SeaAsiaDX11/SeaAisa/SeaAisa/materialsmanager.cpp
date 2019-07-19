@@ -10,8 +10,8 @@ void MaterialsManager::CreateDxMemory(int mtlNum)
 		dxMaterial[i].empty = true;
 
 		dxMaterial[i].parameter._ColorFactor = XMFLOAT4(1.f, 1.f, 1.f, 1.f);
-		dxMaterial[i].parameter._MetallicFactor = 1.f;
-		dxMaterial[i].parameter._RoughnessFactor = 1.f;
+		dxMaterial[i].parameter._MetallicFactor = 0.f;
+		dxMaterial[i].parameter._RoughnessFactor = 0.5f;
 		dxMaterial[i].parameter._IBLFactor = 1.f;
 		dxMaterial[i].parameter._AmbientClor = XMFLOAT4(0.f, 0.f, 0.f, 1.f);
 		dxMaterial[i].type = Opaque;

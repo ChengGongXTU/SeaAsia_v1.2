@@ -55,7 +55,7 @@ public:
 	void ShutUp();
 
 	bool DxLoadTexture(wstring fileName, DxDevice &dxDev);
-	bool DxLoadImage(const char* fileName, DxDevice &dxDev);
+	bool DxLoadImage(const char* fileName, DxDevice &dxDev , bool sRGB);
 	bool DxSetSamplerDesc(D3D11_FILTER filterType,
 		D3D11_TEXTURE_ADDRESS_MODE adddU,
 		D3D11_TEXTURE_ADDRESS_MODE adddV,
@@ -69,5 +69,5 @@ public:
 
 	bool DxSetCubeSamplerState(D3D11_FILTER filterType, D3D11_TEXTURE_ADDRESS_MODE adddU, D3D11_TEXTURE_ADDRESS_MODE adddV, D3D11_TEXTURE_ADDRESS_MODE adddW, D3D11_COMPARISON_FUNC comparType, FLOAT minLod, FLOAT maxLod, UINT maxAni, DxDevice &dxDevice);
 
-	bool DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev);
+	bool DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev, bool sRGB);
 };

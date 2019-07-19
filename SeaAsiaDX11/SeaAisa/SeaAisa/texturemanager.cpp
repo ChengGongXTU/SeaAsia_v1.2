@@ -80,7 +80,50 @@ bool TextureManager::DxLoadTexture(wstring fileName, DxDevice & dxDev)
 	 return true;
 }
 
-bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
+inline float LinearToGammaSpaceExact(float value)
+{
+	if (value <= 0.0F)
+		return 0.0F;
+	else if (value <= 0.0031308F)
+		return 12.92F * value;
+	else if (value < 1.0F)
+		return 1.055F * pow(value, 0.4166667F) - 0.055F;
+	else
+		return pow(value, 0.45454545F);
+}
+
+inline float GammaToLinearSpaceExact(float value)
+{
+	if (value <= 0.04045F)
+		return value / 12.92F;
+	else if (value < 1.0F)
+		return pow((value + 0.055F) / 1.055F, 2.4F);
+	else
+		return pow(value, 2.2F);
+}
+
+inline void GammaToLinearColor(RGBQUAD &color)
+{
+	int red = (int)color.rgbRed;
+	float redf = red / 255.0;
+	redf = GammaToLinearSpaceExact(redf);
+	red = (int)(255 * redf);
+	color.rgbRed = (BYTE)red;
+
+	int green = (int)color.rgbGreen;
+	float greenf = green / 255.0;
+	greenf = GammaToLinearSpaceExact(greenf);
+	green = (int)(255 * greenf);
+	color.rgbGreen = (BYTE)green;
+
+	int blue = (int)color.rgbBlue;
+	float bluef = blue / 255.0;
+	bluef = GammaToLinearSpaceExact(bluef);
+	blue = (int)(255 * bluef);
+	color.rgbBlue = (BYTE)blue;
+}
+
+bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev, bool sRGB)
 {	
 	//load image by freeimage
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
@@ -99,6 +142,7 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 			{
 				RGBQUAD color;
 				FreeImage_GetPixelColor(img1, x, texH - y - 1, &color);
+				if(sRGB) GammaToLinearColor(color);
 				tex[y * texW + x] = (int)((color.rgbRed & 0x000000FF)
 					| ((color.rgbGreen & 0x000000FF) << 8)
 					| ((color.rgbBlue & 0x000000FF) << 16)
@@ -114,6 +158,7 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 				color.rgbReserved = (byte)255;
 				
 				FreeImage_GetPixelColor(img1, x, texH - y - 1, &color);
+				if (sRGB) GammaToLinearColor(color);
 				tex[y * texW + x] = (int)((color.rgbRed & 0x000000FF)
 					| ((color.rgbGreen & 0x000000FF) << 8)
 					| ((color.rgbBlue & 0x000000FF) << 16)
@@ -174,7 +219,7 @@ bool TextureManager::DxLoadImage(const char * fileName, DxDevice & dxDev)
 	return true;
 }
 
-bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev)
+bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev,bool sRGB)
 {
 	//load cubemap image by freeimage
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
@@ -193,6 +238,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
 			FreeImage_GetPixelColor(cubeImg, x + cubeW * 2, cubeH * 2 - y - 1, &color);
+			if (sRGB) GammaToLinearColor(color);
 			tex0[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -207,6 +253,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
 			FreeImage_GetPixelColor(cubeImg, x, cubeH * 2 - y - 1, &color);
+			if (sRGB) GammaToLinearColor(color);
 			tex1[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -222,6 +269,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
 			FreeImage_GetPixelColor(cubeImg, x + cubeW, cubeH * 3 - y - 1, &color);
+			if (sRGB) GammaToLinearColor(color);
 			tex2[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -236,6 +284,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
 			FreeImage_GetPixelColor(cubeImg, x + cubeW, cubeH - y - 1, &color);
+			if (sRGB) GammaToLinearColor(color);
 			tex3[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -250,6 +299,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
 			FreeImage_GetPixelColor(cubeImg, x + cubeH, cubeH * 2 - y - 1, &color);
+			if (sRGB) GammaToLinearColor(color);
 			tex4[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -264,6 +314,7 @@ bool TextureManager::DxLoadNonHDRCubemap(const char * fileName, DxDevice & dxDev
 			RGBQUAD color;
 			if (bitCount != 32) color.rgbReserved = (byte)255;
 			FreeImage_GetPixelColor(cubeImg, cubeW * 3 + x, cubeH * 2 - y - 1, &color);
+			if (sRGB) GammaToLinearColor(color);
 			tex5[y * cubeW + x] = (int)((color.rgbRed & 0x000000FF)
 				| ((color.rgbGreen & 0x000000FF) << 8)
 				| ((color.rgbBlue & 0x000000FF) << 16)
@@ -362,10 +413,10 @@ bool TextureManager::DxSetSamplerDesc(D3D11_FILTER filterType,
 
 bool TextureManager::LoadDefaultImage(DxDevice & dxDev)
 {
-	DxLoadImage("Texture/Default_albedo.png", dxDev);
-	DxLoadImage("Texture/Default_normal.png", dxDev);
-	DxLoadImage("Texture/Default_mra.png", dxDev);
-	DxLoadNonHDRCubemap("Texture/Default_skybox.bmp", dxDev);
+	DxLoadImage("Texture/Default_albedo.png", dxDev, true);
+	DxLoadImage("Texture/Default_normal.png", dxDev,false);
+	DxLoadImage("Texture/Default_mra.png", dxDev,false);
+	DxLoadNonHDRCubemap("Texture/Default_skybox.bmp", dxDev,true);
 	return true;
 }
 

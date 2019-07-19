@@ -875,7 +875,7 @@ void LowLevelRendermanager::LoadFbxNode(FbxNode* pNode, Unity* pParentUnity, int
 		FbxMatrix matS;
 		matR.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(1, 1, 1, 1));
 		matS.SetTRS(FbxVector4(0, 0, 0, 1), FbxVector4(0, 0, 0, 1), FbxVector4(-1, 1, 1, 1));
-		globalM = matR * matS * globalM *  matS;
+		globalM = matS * globalM *  matS * matS;
 
 		currentUnity->wolrdTransform = currentUnity->transform = Transform(Matrix4x4(globalM.Get(0, 0), globalM.Get(0, 1), globalM.Get(0, 2), globalM.Get(0, 3),
 			globalM.Get(1, 0), globalM.Get(1, 1), globalM.Get(1, 2), globalM.Get(1, 3),
@@ -1016,8 +1016,12 @@ void LowLevelRendermanager::LoadFBXMesh(FbxNode *pNode, DxScene &scene, BasicMan
 				//load vertex position
 				int controlPoinIndex = pMesh->GetPolygonVertex(i, j);
 				vertices.push_back(pControlPoint[controlPoinIndex]);
-				index.push_back(i * 3 + j);
+				
 			}
+			index.push_back(i * 3);
+			index.push_back(i * 3 + 2);
+			index.push_back(i * 3 + 1);
+
 		}
 
 		//load vertex normal
