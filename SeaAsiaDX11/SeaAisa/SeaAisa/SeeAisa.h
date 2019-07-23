@@ -49,6 +49,17 @@
 //
 #include"FreeImage.h"
 
+//optix
+#include <optixpp_namespace.h>
+#include <optixu_math_stream_namespace.h>
+#include <optixu_math_namespace.h>
+#include<vector_types.h>
+#include <map>
+#include <nvrtc.h>
+#include<stdlib.h>
+//using namespace optix;
+#define CUDA_NVRTC_ENABLED 1
+
 //Macros
 #define M_PI 3.1415926
 #define Inv_M_PI 0.318301
@@ -57,6 +68,7 @@
 using namespace std;
 using namespace DirectX;
 using namespace fbxsdk;
+
 
 static std::default_random_engine generator(time(NULL));
 static std::uniform_real_distribution<float> dis(0.0, 1.0);

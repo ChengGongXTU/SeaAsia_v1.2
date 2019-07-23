@@ -198,6 +198,9 @@
     <ClInclude Include="PostProcessManager.h">
       <Filter>头文件\Lowlevelrender</Filter>
     </ClInclude>
+    <ClInclude Include="PathTracerManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -369,6 +372,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PostProcessManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PathTracerManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
