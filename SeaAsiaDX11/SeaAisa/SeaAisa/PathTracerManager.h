@@ -6,11 +6,13 @@ using namespace optix;
 struct PtxSourceCache
 {
 	std::map<std::string, std::string *> map;
+	
 	~PtxSourceCache()
 	{
 		for (std::map<std::string, std::string *>::const_iterator it = map.begin(); it != map.end(); ++it)
 			delete it->second;
 	}
+	
 };
 
 struct DirectionalLight
@@ -70,8 +72,12 @@ public:
 	GeometryGroup geometry_group;
 
 	//ptx
-	static PtxSourceCache g_ptxSourceCache;
+	PtxSourceCache g_ptxSourceCache;
 
 	bool Setup(BasicManager &basicMng, LowLevelRendermanager &renderMng);
 	const char* getPtxString(const char* sample, const char* filename, const char** log);
+	void CreateLight(BasicManager & basicMng, LowLevelRendermanager & renderMng);
+	void CreateMaterial(BasicManager & basicMng, LowLevelRendermanager & renderMng);
+	void CreatGeometry(BasicManager & basicMng, LowLevelRendermanager & renderMng);
+	void updateCamera(BasicManager& basicMng);
 };
