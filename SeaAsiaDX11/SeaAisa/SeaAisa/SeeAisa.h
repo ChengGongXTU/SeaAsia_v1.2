@@ -134,7 +134,7 @@ class RayTraceAlgorithm;
 class GlobalIllumination;
 class RayMaterial;
 
-
+class RayTraceManager;
 
 //extra math
 inline float Radians(float deg) {

@@ -192,10 +192,13 @@
     <ClInclude Include="mainwindowui.h" />
     <ClInclude Include="materialsmanager.h" />
     <ClInclude Include="objmanager.h" />
+    <ClInclude Include="OptixFilePath.h" />
+    <ClInclude Include="PathTracerLight.h" />
     <ClInclude Include="PathTracerManager.h" />
     <ClInclude Include="PostProcessManager.h" />
     <ClInclude Include="primitivemanager.h" />
     <ClInclude Include="rand.h" />
+    <ClInclude Include="random.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="RayLight.h" />
     <ClInclude Include="RayMaterial.h" />
@@ -323,6 +326,8 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
+    <None Include="OptiX SDK 6.0.0\optixPathTracer\optixGeometryTriangles.cu" />
+    <None Include="OptiX SDK 6.0.0\optixPathTracer\optixPathTracer.cu" />
     <None Include="Shader\PBRGeometryPass.fx">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PS</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

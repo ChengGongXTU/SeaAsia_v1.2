@@ -2,7 +2,8 @@
 #include"SeeAisa.h"
 #include"basicmanager.h"
 #include"lowlevelrendermanager.h"
-using namespace optix;
+#include"PathTracerLight.h"
+
 struct PtxSourceCache
 {
 	std::map<std::string, std::string *> map;
@@ -15,35 +16,12 @@ struct PtxSourceCache
 	
 };
 
-struct DirectionalLight
-{
-	optix::float3 dir;
-	optix::float3 intensity;
-};
-
-struct PointLight
-{	
-	optix::float3 corner;
-	optix::float3 intensity;
-	optix::float1 range;
-};
-
-struct SpotLight
-{
-	optix::float3 corner;
-	optix::float3 dir;
-	optix::float3 intensity;
-	optix::float1 range;
-	optix::float1 angle_u;
-	optix::float1 angle_p;
-};
-
 class PathTracerManager
 {
 public:
 	//context
-	Context context;
-	Buffer buffer;
+	optix::Context context;
+	optix::Buffer buffer;
 	const char *ptx;
 
 	int rr_begin_depth;
@@ -53,23 +31,23 @@ public:
 
 
 	//light
-	Buffer directionalLightBuffer;
-	Buffer pointLightBuffer;
-	Buffer spotLightBuffer;
+	optix::Buffer directionalLightBuffer;
+	optix::Buffer pointLightBuffer;
+	optix::Buffer spotLightBuffer;
 
 	//material
 	const char *ptx2;
-	Material diffuse;
-	Program diffuse_ch;
-	Program diffuse_ah;
+	optix::Material diffuse;
+	optix::Program diffuse_ch;
+	optix::Program diffuse_ah;
 
 	//geometry
-	Program pgram_bounding_box;
-	Program pgram_intersection;
+	optix::Program pgram_bounding_box;
+	optix::Program pgram_intersection;
 
-	std::vector<GeometryInstance> gis;
-	GeometryGroup shadow_group;
-	GeometryGroup geometry_group;
+	//std::vector<optix::GeometryInstance> gis;
+	optix::Group shadow_group;
+	optix::Group geometry_group;
 
 	//ptx
 	PtxSourceCache g_ptxSourceCache;
@@ -80,4 +58,9 @@ public:
 	void CreateMaterial(BasicManager & basicMng, LowLevelRendermanager & renderMng);
 	void CreatGeometry(BasicManager & basicMng, LowLevelRendermanager & renderMng);
 	void updateCamera(BasicManager& basicMng);
+	void DestroyContext();
+	void displayBufferPPM(const char* filename, RTbuffer buffer, bool disable_srgb_conversion);
+	void SavePPM(const unsigned char *Pix, const char *fname, int wid, int hgt, int chan);
+
+	void Bake(BasicManager &basicMng, LowLevelRendermanager &renderMng);
 };

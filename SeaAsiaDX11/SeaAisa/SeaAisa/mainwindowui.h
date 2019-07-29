@@ -7,6 +7,7 @@
 #include"lowlevelrendermanager.h"
 #include"dxcamera.h"
 #include"RayTraceManager.h"
+#include"PathTracerManager.h"
 
 
 #define IM_ARRAYSIZE(_ARR)  ((int)(sizeof(_ARR)/sizeof(*_ARR)))
@@ -31,4 +32,4 @@ static void ShowMaterialResource(bool* p_open, BasicManager &basicMng);
 static void ShowLightResource(bool* p_open, BasicManager &basicMng);
 static void ShowUnityProperty(bool* p_open, WindowsDevice & winDev, BasicManager &basicMng,LowLevelRendermanager &renderMng, int SelectUnityID);
 
-void MainWindowUI(WindowsDevice & winDev,BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& RayMng,bool *p_open);
+void MainWindowUI(WindowsDevice & winDev,BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& RayMng, PathTracerManager& optixPtMng, bool *p_open);

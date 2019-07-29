@@ -14,11 +14,13 @@
 class RayTraceManager
 {
 public:
+	
 	RayScene scene;
 
 	RayTraceAlgorithm* RayTrace;
-
+	
 	int totalSampleNum;
+	
 	void SetRayTrace(int choos);
 
 	void SceneLoad(DxScene &dxscene, BasicManager &basicMng);
@@ -26,7 +28,7 @@ public:
 	void Render(float& pace);
 
 	void SetSceneSample(int n);
-
+	
 	RayTraceManager() { totalSampleNum = 100; }
 	~RayTraceManager(){}
 

@@ -7,7 +7,6 @@
 #include"materialsmanager.h"
 
 
-
 class BasicManager {
 
 public:

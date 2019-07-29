@@ -1,4 +1,5 @@
 #include "PathTracerManager.h"
+#include"OptixFilePath.h"
 
 const char* const SAMPLE_NAME = "optixPathTracer";
 
@@ -8,7 +9,7 @@ bool PathTracerManager::Setup(BasicManager & basicMng, LowLevelRendermanager & r
 	DxCamera & cam = scene.cameraList[scene.currentCameraId];
 
 	//setup context
-	context = Context::create();
+	context = optix::Context::create();
 
 	//setglobal parameter
 	context->setRayTypeCount(2);
@@ -23,11 +24,11 @@ bool PathTracerManager::Setup(BasicManager & basicMng, LowLevelRendermanager & r
 	context["rr_begin_depth"]->setUint(rr_begin_depth);
 	context["sqrt_num_samples"]->setUint(sqrt_num_samples);
 	context["bad_color"]->setFloat(1000000.0f, 0.0f, 1000000.0f); // Super magenta to make sure it doesn't get averaged out in the progressive rendering.
-	context["bg_color"]->setFloat(make_float3(0.0f, 0.0f, 0.0f));
+	context["bg_color"]->setFloat(optix::make_float3(0.0f, 0.0f, 0.0f));
 
 	width = cam.cWidth;
 	height = cam.cHeight;
-	Buffer buffer;
+	optix::Buffer buffer;
 	buffer = context->createBuffer(RT_BUFFER_OUTPUT, RT_FORMAT_FLOAT4, width, height);
 	context["output_buffer"]->set(buffer);
 
@@ -55,7 +56,7 @@ void PathTracerManager::CreateLight(BasicManager & basicMng, LowLevelRendermanag
 		dirLights[i].intensity.z = dxDirLights[i].Color.z * dxDirLights[i].intensity;
 	}
 
-	Buffer dirLightBuffer = context->createBuffer(RT_BUFFER_INPUT);
+	optix::Buffer dirLightBuffer = context->createBuffer(RT_BUFFER_INPUT);
 	dirLightBuffer->setFormat(RT_FORMAT_USER);
 	dirLightBuffer->setElementSize(sizeof(DirectionalLight));
 	dirLightBuffer->setSize(dirLightCount);
@@ -81,20 +82,27 @@ void PathTracerManager::CreateMaterial(BasicManager & basicMng, LowLevelRenderma
 void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRendermanager & renderMng)
 {
 	//get and create intersect and bounds
-	ptx2 = getPtxString(SAMPLE_NAME, "parallelogram.cu", 0);
-	pgram_bounding_box = context->createProgramFromPTXString(ptx2, "bounds");
-	pgram_intersection = context->createProgramFromPTXString(ptx2, "intersect");
+	ptx2 = getPtxString(SAMPLE_NAME, "optixGeometryTriangles.cu",0);
+	//pgram_bounding_box = context->createProgramFromPTXString(ptx2, "bounds");
+	//pgram_intersection = context->createProgramFromPTXString(ptx2, "intersect");
 
 	//create a geometry
 	Unity* unityList = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].unityList;
 	int geometryCount = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId].endUnityId;
 
-	float3 white = make_float3(0.8f, 0.8f, 0.8f);
+	optix::float3 white = optix::make_float3(0.8f, 0.8f, 0.8f);
+
+	shadow_group = context->createGroup();
+	shadow_group->setAcceleration(context->createAcceleration("Trbvh"));
+
+	geometry_group = context->createGroup();
+	geometry_group->setAcceleration(context->createAcceleration("Trbvh"));
 
 	for (int i = 0; i < geometryCount; i++)
 	{
 		Unity& unity = unityList[i];
 		if (unity.empty == true)	continue;
+		if (unity.objId < 0) continue;
 
 		DxObj* mesh = basicMng.objManager.DxObjMem[unity.objId];
 
@@ -105,14 +113,14 @@ void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRenderman
 		//Tetrahedron tet(2.0f, make_float3(1.5f, 0.0f, 0.0f));
 
 		// Create Buffers for the triangle vertices, normals, texture coordinates, and indices.
-		Buffer vertex_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT3, num_vertices);
-		Buffer normal_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT3, num_vertices);
-		Buffer texcoord_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT2, num_vertices);
-		Buffer index_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_UNSIGNED_INT3, num_faces);
+		optix::Buffer vertex_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT3, num_vertices);
+		optix::Buffer normal_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT3, num_vertices);
+		optix::Buffer texcoord_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_FLOAT2, num_vertices);
+		optix::Buffer index_buffer = context->createBuffer(RT_BUFFER_INPUT, RT_FORMAT_UNSIGNED_INT3, num_faces);
 
-		float3* vertices = new float3[num_vertices];
-		float3* normals = new float3[num_vertices];
-		float2* texcoords = new float2[num_vertices];
+		optix::float3* vertices = new optix::float3[num_vertices];
+		optix::float3* normals = new optix::float3[num_vertices];
+		optix::float2* texcoords = new optix::float2[num_vertices];
 		unsigned* indices = new unsigned[num_faces * 3];
 
 		for (int j = 0; j < num_vertices; j++)
@@ -136,10 +144,10 @@ void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRenderman
 
 
 		// Copy the tetrahedron geometry into the device Buffers.
-		memcpy(vertex_buffer->map(), vertices, sizeof(float3)*num_vertices);
-		memcpy(normal_buffer->map(), normals, sizeof(float3)*num_vertices);
-		memcpy(texcoord_buffer->map(), texcoords, sizeof(float2)*num_vertices);
-		memcpy(index_buffer->map(),indices, sizeof(unsigned) * num_faces * 3);
+		memcpy(vertex_buffer->map(), vertices, sizeof(optix::float3)*num_vertices);
+		memcpy(normal_buffer->map(), normals, sizeof(optix::float3)*num_vertices);
+		memcpy(texcoord_buffer->map(), texcoords, sizeof(optix::float2)*num_vertices);
+		memcpy(index_buffer->map(), indices, sizeof(unsigned) * num_faces * 3);
 
 		vertex_buffer->unmap();
 		normal_buffer->unmap();
@@ -147,7 +155,7 @@ void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRenderman
 		index_buffer->unmap();
 
 		// Create a GeometryTriangles object.
-		GeometryTriangles geom_tri = context->createGeometryTriangles();
+		optix::GeometryTriangles geom_tri = context->createGeometryTriangles();
 
 		geom_tri->setPrimitiveCount(num_faces);
 		geom_tri->setTriangleIndices(index_buffer, RT_FORMAT_UNSIGNED_INT3);
@@ -157,8 +165,7 @@ void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRenderman
 		// Set an attribute program for the GeometryTriangles, which will compute
 		// things like normals and texture coordinates based on the barycentric
 		// coordindates of the intersection.
-		//const char* ptx = getPtxString(SAMPLE_NAME, "optixGeometryTriangles.cu");
-		//geom_tri->setAttributeProgram(context->createProgramFromPTXString(ptx, "triangle_attributes"));
+		geom_tri->setAttributeProgram(context->createProgramFromPTXString(ptx2, "triangle_attributes"));
 
 		geom_tri["index_buffer"]->setBuffer(index_buffer);
 		geom_tri["vertex_buffer"]->setBuffer(vertex_buffer);
@@ -169,27 +176,45 @@ void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRenderman
 		// between GeometryTriangles objects and other Geometry types, as long as
 		// all of the attributes needed by the attached hit programs are produced in
 		// the attribute program.
-		GeometryInstance tri_gi = context->createGeometryInstance(geom_tri, diffuse);
+		optix::GeometryInstance tri_gi = context->createGeometryInstance(geom_tri, diffuse);
 		tri_gi["diffuse_color"]->setFloat(white);
-		gis.push_back(tri_gi);
+		
+		optix::GeometryGroup gg = context->createGeometryGroup();
+		gg->setAcceleration(context->createAcceleration("Trbvh"));
+		gg->addChild(tri_gi);
+		
+		optix::Transform xform = context->createTransform();
+		XMFLOAT4X4 m = unity.transform.m.m;
+		const float arr[16] = {
+			m._11,m._12,m._13,m._14,
+			m._21,m._22,m._23,m._24,
+			m._31,m._32,m._33,m._34,
+			m._41,m._42,m._43,m._44
+		};
+		xform->setMatrix(false, arr, 0);
+		xform->setChild(gg);
+
+		//shadow_group->addChild(xform);
+		geometry_group->addChild(xform);
+		
+
+		delete[] vertices;
+		delete[] normals;
+		delete[] texcoords;
+		delete[] indices;
 	}
 
-
 	//create shadow group
-	shadow_group = context->createGeometryGroup(gis.begin(), gis.end());
-	shadow_group->setAcceleration(context->createAcceleration("Trbvh"));
-	context["top_shadower"]->set(shadow_group);
+	context["top_shadower"]->set(geometry_group);
 
 	//add emission geometry and create geometry group
-	geometry_group = context->createGeometryGroup(gis.begin(), gis.end());
-	geometry_group->setAcceleration(context->createAcceleration("Trbvh"));
 	context["top_object"]->set(geometry_group);
 
 }
 
-void calculateCameraVariables(float3 eye, float3 lookat, float3 up,
+void calculateCameraVariables(optix::float3 eye, optix::float3 lookat, optix::float3 up,
 	float  fov, float  aspect_ratio,
-	float3& U, float3& V, float3& W, bool fov_is_vertical)
+	optix::float3& U, optix::float3& V, optix::float3& W, bool fov_is_vertical)
 {
 	float ulen, vlen, wlen;
 	W = lookat - eye; // Do not normalize W -- it implies focal length
@@ -220,13 +245,13 @@ void PathTracerManager::updateCamera(BasicManager& basicMng)
 	const float fov = cam.aspect;
 	const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 	
-	float3 camera_eye = make_float3(cam.eye.x, cam.eye.y, cam.eye.z);
-	float3 camera_lookat = make_float3(cam.at.x, cam.at.y, cam.at.z);
-	float3 camera_up = make_float3(cam.up.x, cam.up.y, cam.up.z);
+	optix::float3 camera_eye = optix::make_float3(cam.eye.x, cam.eye.y, cam.eye.z);
+	optix::float3 camera_lookat = optix::make_float3(cam.at.x, cam.at.y, cam.at.z);
+	optix::float3 camera_up = optix::make_float3(cam.up.x, cam.up.y, cam.up.z);
 
 	optix::Matrix4x4 camera_rotate = optix::Matrix4x4::identity();
 
-	float3 camera_u, camera_v, camera_w;
+	optix::float3 camera_u, camera_v, camera_w;
 	calculateCameraVariables(
 		camera_eye, camera_lookat, camera_up, fov, aspect_ratio,
 		camera_u, camera_v, camera_w, /*fov_is_vertical*/ true);
@@ -257,6 +282,147 @@ void PathTracerManager::updateCamera(BasicManager& basicMng)
 	context["W"]->setFloat(camera_w);
 }
 
+void PathTracerManager::DestroyContext()
+{
+	if (context)
+	{
+		context->destroy();
+		context = 0;
+	}
+}
+
+
+
+void  PathTracerManager::SavePPM(const unsigned char *Pix, const char *fname, int wid, int hgt, int chan)
+{
+	if (Pix == NULL || wid < 1 || hgt < 1)
+		throw optix::Exception("Image is ill-formed. Not saving");
+
+	if (chan != 1 && chan != 3 && chan != 4)
+		throw optix::Exception("Attempting to save image with channel count != 1, 3, or 4.");
+
+	std::ofstream OutFile(fname, std::ios::out | std::ios::binary);
+	if (!OutFile.is_open())
+		throw optix::Exception("Could not open file for SavePPM");
+
+	bool is_float = false;
+	OutFile << 'P';
+	OutFile << ((chan == 1 ? (is_float ? 'Z' : '5') : (chan == 3 ? (is_float ? '7' : '6') : '8'))) << std::endl;
+	OutFile << wid << " " << hgt << std::endl << 255 << std::endl;
+
+	OutFile.write(reinterpret_cast<char*>(const_cast<unsigned char*>(Pix)), wid * hgt * chan * (is_float ? 4 : 1));
+
+	OutFile.close();
+}
+
+void  PathTracerManager::displayBufferPPM(const char* filename, RTbuffer buffer, bool disable_srgb_conversion)
+{
+	int width, height;
+	RTsize buffer_width, buffer_height;
+
+	void* imageData;
+	rtBufferMap(buffer, &imageData);
+
+	rtBufferGetSize2D(buffer, &buffer_width, &buffer_height);
+	width = static_cast<int>(buffer_width);
+	height = static_cast<int>(buffer_height);
+
+	std::vector<unsigned char> pix(width * height * 3);
+
+	RTformat buffer_format;
+	rtBufferGetFormat(buffer, &buffer_format);
+
+	const float gamma_inv = 1.0f / 2.2f;
+
+	switch (buffer_format) {
+	case RT_FORMAT_UNSIGNED_BYTE4:
+		// Data is BGRA and upside down, so we need to swizzle to RGB
+		for (int j = height - 1; j >= 0; --j) {
+			unsigned char *dst = &pix[0] + (3 * width*(height - 1 - j));
+			unsigned char *src = ((unsigned char*)imageData) + (4 * width*j);
+			for (int i = 0; i < width; i++) {
+				*dst++ = *(src + 2);
+				*dst++ = *(src + 1);
+				*dst++ = *(src + 0);
+				src += 4;
+			}
+		}
+		break;
+
+	case RT_FORMAT_FLOAT:
+		// This buffer is upside down
+		for (int j = height - 1; j >= 0; --j) {
+			unsigned char *dst = &pix[0] + width * (height - 1 - j);
+			float* src = ((float*)imageData) + (3 * width*j);
+			for (int i = 0; i < width; i++) {
+				int P;
+				if (disable_srgb_conversion)
+					P = static_cast<int>((*src++) * 255.0f);
+				else
+					P = static_cast<int>(std::pow(*src++, gamma_inv) * 255.0f);
+				unsigned int Clamped = P < 0 ? 0 : P > 0xff ? 0xff : P;
+
+				// write the pixel to all 3 channels
+				*dst++ = static_cast<unsigned char>(Clamped);
+				*dst++ = static_cast<unsigned char>(Clamped);
+				*dst++ = static_cast<unsigned char>(Clamped);
+			}
+		}
+		break;
+
+	case RT_FORMAT_FLOAT3:
+		// This buffer is upside down
+		for (int j = height - 1; j >= 0; --j) {
+			unsigned char *dst = &pix[0] + (3 * width*(height - 1 - j));
+			float* src = ((float*)imageData) + (3 * width*j);
+			for (int i = 0; i < width; i++) {
+				for (int elem = 0; elem < 3; ++elem) {
+					int P;
+					if (disable_srgb_conversion)
+						P = static_cast<int>((*src++) * 255.0f);
+					else
+						P = static_cast<int>(std::pow(*src++, gamma_inv) * 255.0f);
+					unsigned int Clamped = P < 0 ? 0 : P > 0xff ? 0xff : P;
+					*dst++ = static_cast<unsigned char>(Clamped);
+				}
+			}
+		}
+		break;
+
+	case RT_FORMAT_FLOAT4:
+		// This buffer is upside down
+		for (int j = height - 1; j >= 0; --j) {
+			unsigned char *dst = &pix[0] + (3 * width*(height - 1 - j));
+			float* src = ((float*)imageData) + (4 * width*j);
+			for (int i = 0; i < width; i++) {
+				for (int elem = 0; elem < 3; ++elem) {
+					int P;
+					if (disable_srgb_conversion)
+						P = static_cast<int>((*src++) * 255.0f);
+					else
+						P = static_cast<int>(std::pow(*src++, gamma_inv) * 255.0f);
+					unsigned int Clamped = P < 0 ? 0 : P > 0xff ? 0xff : P;
+					*dst++ = static_cast<unsigned char>(Clamped);
+				}
+
+				// skip alpha
+				src++;
+			}
+		}
+		break;
+
+	default:
+		fprintf(stderr, "Unrecognized buffer data type or format.\n");
+		exit(2);
+		break;
+	}
+
+	SavePPM(&pix[0], filename, width, height, 3);
+
+	// Now unmap the buffer
+	rtBufferUnmap(buffer);
+}
+
 bool dirExists(const char* path)
 {
 #if defined(_WIN32)
@@ -272,18 +438,17 @@ bool dirExists(const char* path)
 #endif
 }
 
-#define SAMPLES_DIR "C:/ProgramData/NVIDIA Corporation/OptiX SDK 6.0.0/SDK"
-
 const char* samplesDir()
 {
 	static char s[512];
-
+	/*
 	// Allow for overrides.
-	const char* dir = "OPTIX_SAMPLES_SDK_DIR";
+	const char* dir = "D:\\WorkSoftware\\GitHub\\SeaAsia_v1.2\\SeaAsiaDX11\\SeaAisa\\SeaAisa\\OptiX SDK 6.0.0";
 	if (dir) {
 		strcpy_s(s, dir);
 		return s;
 	}
+	*/
 
 	// Return hardcoded path if it exists.
 	if (dirExists(SAMPLES_DIR))
@@ -330,29 +495,8 @@ static void getCuStringFromFile(std::string &cu, std::string& location, const ch
 	}
 
 	// Wasn't able to find or open the requested file
-	throw Exception("Couldn't open source file " + std::string(filename));
+	throw optix::Exception("Couldn't open source file " + std::string(filename));
 }
-
-#define SAMPLES_ABSOLUTE_INCLUDE_DIRS \
-  "C:/ProgramData/NVIDIA Corporation/OptiX SDK 6.0.0/include", \
-  "C:/ProgramData/NVIDIA Corporation/OptiX SDK 6.0.0/include/optixu", \
-  "C:/ProgramData/NVIDIA Corporation/OptiX SDK 6.0.0/SDK/support/mdl-sdk/include", \
-  "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.0/include", 
-
-#define SAMPLES_RELATIVE_INCLUDE_DIRS \
-  "/sutil", \
-  "/cuda", 
-
-#define CUDA_NVRTC_OPTIONS  \
-  "-arch", \
-  "compute_30", \
-  "-use_fast_math", \
-  "-lineinfo", \
-  "-default-device", \
-  "-rdc", \
-  "true", \
-  "-D__x86_64", \
-  0,
 
 static std::string g_nvrtcLog;
 
@@ -409,7 +553,7 @@ static void getPtxFromCuString(std::string &ptx, const char* sample_name, const 
 			*log_string = g_nvrtcLog.c_str();
 	}
 	if (compileRes != NVRTC_SUCCESS)
-		throw Exception("NVRTC Compilation failed.\n" + g_nvrtcLog);
+		throw optix::Exception("NVRTC Compilation failed.\n" + g_nvrtcLog);
 
 	// Retrieve PTX code
 	size_t ptx_size = 0;
@@ -450,3 +594,14 @@ const char* PathTracerManager::getPtxString(const char* sample,const char* filen
 	return ptx->c_str();
 }
 
+void PathTracerManager::Bake(BasicManager &basicMng, LowLevelRendermanager &renderMng)
+{
+	Setup(basicMng, renderMng);
+	CreateLight(basicMng, renderMng);
+	CreateMaterial(basicMng, renderMng);
+	CreatGeometry(basicMng, renderMng);
+	updateCamera(basicMng);
+	context->launch(0, width, height);
+	displayBufferPPM("D:/WorkSoftware/GitHub/SeaAsia_v1.2/SeaAsiaDX11/SeaAisa/SeaAisa/OptiX SDK 6.0.0/pathtrace.ppm" , context["output_buffer"]->getBuffer()->get(), false);
+	DestroyContext();
+}

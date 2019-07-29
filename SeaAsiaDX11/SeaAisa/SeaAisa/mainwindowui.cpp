@@ -18,7 +18,7 @@ static bool Show_Light_Resource = false;
 static bool Show_Unity_Property = false;
 static int SelectUnityID = -1;
 
-void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& rayMng, bool *p_open)
+void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRendermanager &renderMng, RayTraceManager& rayMng, PathTracerManager& optixPtMng,bool *p_open)
 {
 
 	if (show_scene_resource_view)	ScenenResourceView(winDev, basicMng, renderMng, &show_scene_resource_view);
@@ -139,12 +139,9 @@ void MainWindowUI(WindowsDevice & winDev, BasicManager &basicMng, LowLevelRender
 		//ray trace render
 		if (ImGui::BeginMenu("Ray Trace Render "))
 		{
-			if (ImGui::Button("Begin Global Illumination Render"))
+			if (ImGui::Button("Begin Optix Path Tracer"))
 			{
-				float dsadas;
-				rayMng.SetRayTrace(0);
-				rayMng.SceneLoad(basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId], basicMng);
-				rayMng.Render(dsadas);
+				optixPtMng.Bake(basicMng, renderMng);
 			}
 			ImGui::EndMenu();
 		}

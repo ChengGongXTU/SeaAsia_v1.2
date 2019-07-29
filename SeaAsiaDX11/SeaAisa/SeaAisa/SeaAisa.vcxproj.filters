@@ -37,6 +37,9 @@
     <Filter Include="头文件\DDSTextureLoader">
       <UniqueIdentifier>{8b7a77cf-c36a-42a7-be29-723740e3c2b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CUDA File">
+      <UniqueIdentifier>{bf13297a-7c40-445c-96f4-4193bf3562ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SeeAisa.h">
@@ -199,6 +202,15 @@
       <Filter>头文件\Lowlevelrender</Filter>
     </ClInclude>
     <ClInclude Include="PathTracerManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="OptixFilePath.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="random.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PathTracerLight.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -429,6 +441,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="Shader\PBRGeometryPass.fx" />
+    <None Include="OptiX SDK 6.0.0\optixPathTracer\optixGeometryTriangles.cu">
+      <Filter>CUDA File</Filter>
+    </None>
+    <None Include="OptiX SDK 6.0.0\optixPathTracer\optixPathTracer.cu">
+      <Filter>CUDA File</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Texture.dds" />
