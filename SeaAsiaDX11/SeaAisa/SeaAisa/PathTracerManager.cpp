@@ -275,7 +275,7 @@ void PathTracerManager::updateCamera(BasicManager& basicMng)
 
 	camera_rotate = optix::Matrix4x4::identity();
 	//camera_changed = false;
-	//context["frame_number"]->setUint(frame_number++);
+	context["frame_number"]->setUint(1u);
 	context["eye"]->setFloat(camera_eye);
 	context["U"]->setFloat(camera_u);
 	context["V"]->setFloat(camera_v);

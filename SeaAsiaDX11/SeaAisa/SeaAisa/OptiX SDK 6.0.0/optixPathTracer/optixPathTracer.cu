@@ -79,7 +79,7 @@ rtDeclareVariable(unsigned int,  sqrt_num_samples, , );
 rtDeclareVariable(unsigned int,  rr_begin_depth, , );
 
 rtBuffer<float4, 2>              output_buffer;
-rtBuffer<DirectionalLight>     lights;
+rtBuffer<DirectionalLight>     dirLights;
 
 
 RT_PROGRAM void pathtrace_camera()
@@ -174,6 +174,7 @@ RT_PROGRAM void pathtrace_camera()
 //
 //-----------------------------------------------------------------------------
 
+/*
 rtDeclareVariable(float3,        emission_color, , );
 
 RT_PROGRAM void diffuseEmitter()
@@ -181,7 +182,7 @@ RT_PROGRAM void diffuseEmitter()
     current_prd.radiance = current_prd.countEmitted ? emission_color : make_float3(0.f);
     current_prd.done = true;
 }
-
+*/
 
 //-----------------------------------------------------------------------------
 //
@@ -225,13 +226,13 @@ RT_PROGRAM void diffuse()
     //
     // Next event estimation (compute direct lighting).
     //
-    unsigned int num_lights = lights.size();
+    unsigned int num_lights = dirLights.size();
     float3 result = make_float3(0.0f);
 
     for(int i = 0; i < num_lights; ++i)
     {
         // Choose random point on light
-        DirectionalLight light = lights[i];
+        DirectionalLight light = dirLights[i];
 
         // Calculate properties of light sample (for area based pdf)
         const float  Ldist = 9999999.0f;
