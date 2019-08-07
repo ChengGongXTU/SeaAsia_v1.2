@@ -18,8 +18,8 @@ bool PathTracerManager::Setup(BasicManager & basicMng, LowLevelRendermanager & r
 	context->setMaxTraceDepth(1);
 
 	//create global varialbe
-	rr_begin_depth = 4;
-	sqrt_num_samples = 2;
+	rr_begin_depth = 6;
+	sqrt_num_samples = 128;
 	context["scene_epsilon"]->setFloat(1.e-3f);
 	context["rr_begin_depth"]->setUint(rr_begin_depth);
 	context["sqrt_num_samples"]->setUint(sqrt_num_samples);
@@ -184,14 +184,16 @@ void PathTracerManager::CreatGeometry(BasicManager & basicMng, LowLevelRenderman
 		gg->addChild(tri_gi);
 		
 		optix::Transform xform = context->createTransform();
-		XMFLOAT4X4 m = unity.transform.m.m;
+		XMFLOAT4X4 m = unity.wolrdTransform.m.m;
 		const float arr[16] = {
 			m._11,m._12,m._13,m._14,
 			m._21,m._22,m._23,m._24,
 			m._31,m._32,m._33,m._34,
 			m._41,m._42,m._43,m._44
 		};
-		xform->setMatrix(false, arr, 0);
+		optix::Matrix4x4 mat = optix::Matrix4x4(arr);
+		//xform->setMatrix(false, arr, 0);
+		xform->setMatrix(true, mat.getData(), mat.inverse().getData());
 		xform->setChild(gg);
 
 		//shadow_group->addChild(xform);
@@ -220,8 +222,8 @@ void calculateCameraVariables(optix::float3 eye, optix::float3 lookat, optix::fl
 	W = lookat - eye; // Do not normalize W -- it implies focal length
 
 	wlen = length(W);
-	U = normalize(cross(W, up));
-	V = normalize(cross(U, W));
+	U = -normalize(cross(W, up)); 
+	V = -normalize(cross(U, W));
 
 	if (fov_is_vertical) {
 		vlen = wlen * tanf(0.5f * fov * M_PIf / 180.0f);
@@ -242,7 +244,7 @@ void PathTracerManager::updateCamera(BasicManager& basicMng)
 	DxScene& scene = basicMng.sceneManager.sceneList[basicMng.sceneManager.currentSceneId];
 	DxCamera& cam = scene.cameraList[scene.currentCameraId];
 
-	const float fov = cam.aspect;
+	const float fov = cam.aspect*360/3.1415;
 	const float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 	
 	optix::float3 camera_eye = optix::make_float3(cam.eye.x, cam.eye.y, cam.eye.z);

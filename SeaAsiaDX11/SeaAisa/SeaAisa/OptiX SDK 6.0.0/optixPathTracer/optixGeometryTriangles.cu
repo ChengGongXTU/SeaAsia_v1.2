@@ -46,7 +46,7 @@ RT_PROGRAM void triangle_attributes()
     const float3 v0    = vertex_buffer[v_idx.x];
     const float3 v1    = vertex_buffer[v_idx.y];
     const float3 v2    = vertex_buffer[v_idx.z];
-    const float3 Ng    = optix::cross( v1 - v0, v2 - v0 );
+    const float3 Ng    = -optix::cross( v1 - v0, v2 - v0 );
 
     geometric_normal = optix::normalize( Ng );
 

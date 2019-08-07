@@ -235,8 +235,8 @@ RT_PROGRAM void diffuse()
         DirectionalLight light = dirLights[i];
 
         // Calculate properties of light sample (for area based pdf)
-        const float  Ldist = 9999999.0f;
-		const float3 L     = normalize(light.dir);
+        const float  Ldist = 999999.0f;
+		const float3 L     = normalize(-light.dir);
         const float  nDl   = dot( ffnormal, L );
 
 
@@ -256,8 +256,8 @@ RT_PROGRAM void diffuse()
                 result += light.intensity * weight;
             }
         }
+		
     }
-
     current_prd.radiance = result;
 }
 
